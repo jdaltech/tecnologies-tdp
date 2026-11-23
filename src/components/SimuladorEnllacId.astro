@@ -1,0 +1,344 @@
+---
+// src/components/SimuladorEnllacId.astro
+---
+
+<div class="get-widget not-content">
+  <div class="widget-header">
+    <span class="badge">Laboratori interactiu · Paràmetres URL (GET)</span>
+    <h4>Com sap cada botó "Esborrar" quina fila ha d'eliminar?</h4>
+    <p class="guide">
+      Prem el botó <strong>Esborrar</strong> d'una de les tasques de l'esquerra i segueix el recorregut de l'<code>id</code> en 3 passos a la dreta.
+    </p>
+  </div>
+
+  <div class="sim-layout">
+    <!-- COLUMNA ESQUERRA: LLISTA A INDEX.PHP -->
+    <div class="panel">
+      <div class="panel-head">Pantalla de l'usuari (<code>index.php</code>)</div>
+      <p class="panel-sub">Cada fila té el seu propi botó amb el seu <code>id</code> enganxat:</p>
+      <ul class="task-list" id="sim-task-list">
+        <li data-id="1">
+          <span class="t-info"><small>id = 1</small> Netejar el cotxe</span>
+          <button type="button" class="del-btn" data-id="1" data-name="Netejar el cotxe">Esborrar</button>
+        </li>
+        <li data-id="2">
+          <span class="t-info"><small>id = 2</small> Fer exercici</span>
+          <button type="button" class="del-btn" data-id="2" data-name="Fer exercici">Esborrar</button>
+        </li>
+        <li data-id="3">
+          <span class="t-info"><small>id = 3</small> Comprar pa</span>
+          <button type="button" class="del-btn" data-id="3" data-name="Comprar pa">Esborrar</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- COLUMNA DRETA: ELS 3 PASSOS DEL VIATGE -->
+    <div class="panel">
+      <div class="panel-head">Recorregut de la dada en fer clic</div>
+
+      <div class="flow-steps" id="flow-steps">
+        <!-- PAS 1 -->
+        <div class="step-card">
+          <span class="step-tag">PAS 1 · Enllaç HTML d'aquesta fila</span>
+          <code id="step1-html">&lt;!-- Prem un botó "Esborrar" --&gt;</code>
+        </div>
+
+        <div class="step-arrow">⬇ El navegador obre aquesta adreça</div>
+
+        <!-- PAS 2 -->
+        <div class="step-card">
+          <span class="step-tag">PAS 2 · La dada viatja per la URL</span>
+          <div class="browser-bar">
+            <span>localhost/gestor-tasques/esborrar_tasca.php</span><strong id="step2-param" class="url-param">?id=?</strong>
+          </div>
+        </div>
+
+        <div class="step-arrow">⬇ El servidor rep el paquet</div>
+
+        <!-- PAS 3 -->
+        <div class="step-card final">
+          <span class="step-tag">PAS 3 · PHP ho llegeix a <code>esborrar_tasca.php</code></span>
+          <code id="step3-php">$_GET['id']  ➔  esperant clic...</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initEnllacId() {
+    const list = document.getElementById('sim-task-list');
+    const s1 = document.getElementById('step1-html');
+    const s2 = document.getElementById('step2-param');
+    const s3 = document.getElementById('step3-php');
+    const flow = document.getElementById('flow-steps');
+
+    if (!list || !s1 || !s2 || !s3 || !flow) return;
+
+    const buttons = list.querySelectorAll('.del-btn');
+    const items = list.querySelectorAll('li');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id')!;
+        const name = btn.getAttribute('data-name')!;
+
+        items.forEach(li => li.classList.toggle('selected', li.getAttribute('data-id') === id));
+        flow.classList.add('active-flow');
+
+        s1.textContent = `<li>${name} <a href='esborrar_tasca.php?id=${id}'>Esborrar</a></li>`;
+        s2.textContent = `?id=${id}`; s3.textContent = `$id = $_GET['id'];  // Val${id} ➔ Esborrarà només la fila ${id}`;
+      });
+    });
+  }
+
+  initEnllacId();
+  document.addEventListener('astro:after-swap', initEnllacId);
+</script>
+
+<style>
+  .get-widget,
+  .get-widget * {
+    box-sizing: border-box;
+  }
+
+  .get-widget {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #f8fafc;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .widget-header {
+    margin-bottom: 1.15rem;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #0f172a;
+    background: #facc15;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+  }
+
+  .widget-header h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+    color: #f8fafc;
+  }
+
+  .guide {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+
+  .guide code {
+    background: rgba(30, 41, 59, 0.9);
+    color: #facc15;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.84rem;
+  }
+
+  .sim-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 820px) {
+    .sim-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .panel {
+    min-width: 0;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .panel-head {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #38bdf8;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 0.45rem;
+  }
+
+  .panel-head code {
+    background: transparent;
+    color: #facc15;
+    text-transform: none;
+  }
+
+  .panel-sub {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #cbd5e1;
+  }
+
+  .panel-sub code {
+    background: rgba(15, 23, 42, 0.7);
+    color: #facc15;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+  }
+
+  .task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .task-list li {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .task-list li.selected {
+    border-color: #facc15;
+    background: rgba(250, 204, 21, 0.1);
+  }
+
+  .t-info {
+    font-size: 0.9rem;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .t-info small {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .del-btn {
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .del-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+  }
+
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    opacity: 0.65;
+    transition: opacity 0.2s;
+  }
+
+  .flow-steps.active-flow {
+    opacity: 1;
+  }
+
+  .step-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.65rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .step-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+
+  .step-tag code {
+    background: transparent;
+    color: #facc15;
+    text-transform: none;
+  }
+
+  .step-card > code {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    word-break: break-all;
+  }
+
+  .step-arrow {
+    text-align: center;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #38bdf8;
+  }
+
+  .browser-bar {
+    background: #020617;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 0.45rem 0.65rem;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .url-param {
+    background: rgba(250, 204, 21, 0.2);
+    color: #facc15;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .step-card.final {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(34, 197, 94, 0.08);
+  }
+
+  .step-card.final > code {
+    color: #86efac;
+  }
+</style>

@@ -31,8 +31,8 @@ Fins ara hem treballat amb pàgines web creades només amb **HTML i CSS**. Aques
 
 :::tip[On s'han de desar tots els fitxers del projecte?]
 Apache només pot executar fitxers PHP que estiguin guardats dins la carpeta pública del servidor:
-* **Windows:** `C:\xampp\htdocs\`
-* **macOS:** `/Applications/XAMPP/htdocs/`
+- **Windows:** `C:\xampp\htdocs\`
+- **macOS:** `/Applications/XAMPP/htdocs/`
 
 Dins d'aquesta carpeta `htdocs`, crea una carpeta nova per al teu projecte (per exemple, `projecte_materies`). Tot el que posis allà dins es podrà obrir des del navegador escrivint `http://localhost/projecte_materies/...`.
 :::
@@ -52,41 +52,55 @@ Amb Apache i MySQL engegats en verd al panell d'XAMPP:
 
 ---
 
-## Pas 3: Crear la base de dades i la taula `materies`
+## Pas 3: Tipus de dades a MySQL
 
-Ara crearem l'estructura exacta que esperarà el nostre codi PHP més endavant.
+Abans de crear la taula, cal dir-li a la base de dades **quina mena d'informació** guardarà cada columna perquè reservi l'espai adequat i eviti errors:
+
+| Tipus de dada | Què emmagatzema? | Quan el fem servir? |
+| :--- | :--- | :--- |
+| **`INT`** *(Integer)* | Números enters (sense decimals): `1`, `2`, `45`, `2026`. | Per a identificadors (`id`), edats, quantitats o comptadors. |
+| **`VARCHAR(n)`** | Cadenes de text curt de longitud variable, fins a un màxim de `n` caràcters (ex: `VARCHAR(50)`). | Per a noms, cognoms, correus electrònics, cursos o noms de matèries. |
+| **`TEXT`** | Textos llargs sense límit curt de caràcters. | Per a comentaris, descripcions llargues o articles d'un bloc. |
+| **`DATE`** | Dates en format `AAAA-MM-DD` (ex: `2026-11-23`). | Per a dates de naixement o dies d'inscripció. |
+
+---
+
+## Pas 4: Crear la base de dades i la taula `materies`
+
+El nostre formulari HTML recollirà **5 dades de l'alumne** (`nom`, `cognom`, `mail`, `curs` i `materia`), però a la base de dades hi crearem **6 columnes** perquè afegirem un **`id` automàtic** al principi.
 
 <ConstructorTaulaSql />
 
 Segueix aquests passos dins de **phpMyAdmin**:
 
 1. **Crear la base de dades:**
-   * A la columna esquerra, fes clic a **Nova** (*New*).
-   * Al camp *Nom de la base de dades*, escriu exactament:
+   - A la columna esquerra, fes clic a **Nova** (*New*).
+   - Al camp *Nom de la base de dades*, escriu exactament:
      ```text
      formulari_materia
      ```
-   * Prem el botó **Crea** (*Create*).
+   - Prem el botó **Crea** (*Create*).
 
 2. **Crear la taula:**
-   * Dins de `formulari_materia`, et demanarà crear una taula nova.
-   * Escriu el nom **`materies`** i indica **5 columnes** (o **4 columnes** si no hi poses l'`id`). Prem **Continua** (*Go*).
+   - Dins de `formulari_materia`, et demanarà crear una taula nova.
+   - Escriu el nom **`materies`** i indica **6 columnes**. Prem **Continua** (*Go*).
 
 3. **Configurar els camps (columnes):**
-   Omple les files amb aquests noms i tipus exactes:
+   Omple les 6 files amb aquests noms, tipus i índexs exactes:
 
-   | Nom de la columna | Tipus | Longitud / Valors | Extra / Índex |
-   | :--- | :--- | :--- | :--- |
-   | `id` | `INT` | *(buit)* | Marca la casella **`A_I`** (*Auto Increment*) → S'assignarà com a `PRIMARY` |
-   | `nom` | `VARCHAR` | `50` | — |
-   | `cognoms` | `VARCHAR` | `100` | — |
-   | `mail` | `VARCHAR` | `100` | — |
-   | `materia` | `VARCHAR` | `50` | — |
+   | Nom de la columna | Tipus | Longitud / Valors | Índex / Extra | Funció al projecte |
+   | :--- | :--- | :--- | :--- | :--- |
+   | `id` | `INT` | *(buit)* | Marca **`A_I`** (*Auto Increment*) → `PRIMARY` | **El genera sola la BBDD** (`1`, `2`, `3`...) cada vegada que entra un alumne nou. No es demana al formulari. |
+   | `nom` | `VARCHAR` | `50` | — | Nom de l'alumne que ve del formulari. |
+   | `cognom` | `VARCHAR` | `100` | — | Cognom de l'alumne que ve del formulari. |
+   | `mail` | `VARCHAR` | `100` | Índex: **`UNIQUE`** | **Identificador únic** de l'alumne: impedeix que el mateix correu s'inscrigui dues vegades. |
+   | `curs` | `VARCHAR` | `30` | — | Curs de l'alumne (ex: `1r Batxillerat`). |
+   | `materia` | `VARCHAR` | `50` | — | Matèria optativa triada al formulari. |
 
 4. Prem el botó **Desa** (*Save*) a la part inferior dreta.
 
-:::caution[Molt important: respecta les minúscules!]
-Tant el nom de la base de dades (`formulari_materia`) com el de la taula (`materies`) i el de cada columna (`nom`, `cognoms`, `mail`, `materia`) han d'estar escrits en minúscules i sense accents. Si hi ha una sola lletra diferent, la connexió PHP fallarà.
+:::caution[Molt important: respecta els noms exactes!]
+Tant el nom de la base de dades (`formulari_materia`) com el de la taula (`materies`) i el de cada columna (`id`, `nom`, `cognom`, `mail`, `curs`, `materia`) han d'estar escrits en minúscules, en singular i sense accents. Si hi ha una sola lletra diferent, la inserció des de PHP fallarà.
 :::
 
 ---

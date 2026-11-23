@@ -1,0 +1,195 @@
+---
+title: Act 1 · Gestor de Tasques (CRUD amb PHP i MySQL)
+description: Guia pas a pas amb pistes per construir un gestor de tasques complet amb HTML, PHP i MySQL seguint el viatge de les dades.
+---
+import SimuladorWhilePHP from '../../../../components/SimuladorWhilePHP.astro';
+import SimuladorEnllacId from '../../../../components/SimuladorEnllacId.astro';
+import SimuladorEsborrarPHP from '../../../../components/SimuladorEsborrarPHP.astro';
+
+En aquest projecte construiràs la teva primera aplicació web completa amb persistència de dades: un **Gestor de Tasques** (*To-Do List*) connectat a MySQL.
+
+L'objectiu no és copiar codi, sinó **seguir el rastre de la informació** des que l'usuari escriu una tasca al navegador fins que viatja pel servidor PHP, es guarda a la base de dades i torna a aparèixer (o s'esborra) a la pantalla.
+
+```text
+  [ Usuari / Navegador ]  ──▶  [ Servidor PHP ]  ──▶  [ Base de Dades MySQL ]
+   (HTML + Formularis)          (Lògica i SQL)         (Taula permanent)
+```
+
+---
+
+## Mapa d'arquitectura del projecte
+
+Abans d'escriure cap línia, tingues clar quins **4 fitxers** viuran dins la teva carpeta del servidor (`xampp/htdocs/gestor-tasques/`) i quina funció té cadascun:
+
+| Fitxer | Paper dins l'aplicació | Es veu a la pantalla? |
+| :--- | :--- | :--- |
+| **`connexio.php`** | La clau que connecta PHP amb la base de dades MySQL. | No (s'inclou dins els altres fitxers). |
+| **`index.php`** | La pàgina principal: mostra el formulari per crear tasques i la llista amb les tasques guardades. | **Sí** (és la interfície de l'usuari). |
+| **`afegir_tasca.php`** | El missatger secret que rep el text del formulari i fa l'`INSERT` a MySQL. | No (processa en segon pla i redirigeix). |
+| **`esborrar_tasca.php`** | Rep l'`id` de la tasca triada i executa el `DELETE` a MySQL. | No (esborra en segon pla i redirigeix). |
+
+---
+
+## Etapa 1: Crear l'estructura (BBDD, carpetes i connexió)
+
+Abans de fer cap pantalla, has de preparar l'escenari on viuran les dades i el pont per arribar-hi.
+
+### Què has d'aconseguir?
+1. Tenir **Apache** i **MySQL** engegats en verd al panell d'XAMPP.
+2. Crear a **phpMyAdmin** la base de dades (ex: `gestor_tasques`) i una taula (ex: `tasques`) amb aquestes **3 columnes**:
+   - `id` → Identificador únic numèric que es genera sol.
+   - `tasca` → El text de la tasca que escriurà l'usuari.
+   - `data_creacio` → La data/hora en què s'ha creat el registre.
+3. Crear la carpeta `gestor-tasques` dins d'`htdocs` i programar el fitxer `connexio.php`.
+
+:::tip[Pistes per a l'Etapa 1]
+- **Sobre els tipus de dada a phpMyAdmin:** L'`id` necessita ser un enter (`INT`) amb clau primària (`PRIMARY`) i auto-increment (`A_I`). Per a `tasca`, pensa quina longitud de `VARCHAR` és raonable (per exemple, `150` o `255`). I per a `data_creacio`, investiga el tipus **`TIMESTAMP`** amb valor predeterminat **`CURRENT_TIMESTAMP`**: així MySQL posarà la data i hora automàticament sense que hagis de fer res a PHP!
+- **Sobre `connexio.php`:** Recorda les 4 dades que necessita la funció `mysqli_connect(...)` a XAMPP: servidor (`"localhost"`), usuari (`"root"`), contrasenya (`""`) i el nom exacte de la teva base de dades. Si obres `http://localhost/gestor-tasques/connexio.php` al navegador i surt en blanc sense errors, la connexió funciona!
+:::
+
+---
+
+## Etapa 2: Afegir una tasca a la base de dades (`CREATE`)
+
+Ara necessites un punt d'entrada perquè l'usuari escrigui una tasca i un fitxer PHP ocult que l'enviï cap a MySQL.
+
+### Què has d'aconseguir?
+1. Crear `index.php` amb un formulari HTML senzill: un camp de text (`<input>`) i un botó **Afegir**. **(Pots fer-ho amb IA)**
+2. Configurar el formulari perquè enviï les dades pel mètode **`POST`** cap al fitxer `afegir_tasca.php`.
+3. Programar `afegir_tasca.php` perquè reculli el text enviat, l'insereixi a la taula `tasques` i torni automàticament a `index.php`.
+
+:::tip[Pistes per a l'Etapa 2]
+- **L'atribut `name` és vital:** PHP només pot llegir un `<input>` si té l'atribut `name="..."` (per exemple, `name="tasca"`). A `afegir_tasca.php` el recuperaràs amb `$_POST['tasca']`.
+- **Connectar el fitxer:** A la primera línia de `afegir_tasca.php`, recorda incloure la clau de connexió amb `include 'connexio.php';` (o `require`).
+- **La consulta SQL:** Has de construir una cadena amb `INSERT INTO tasques (tasca) VALUES (...)` i executar-la amb `mysqli_query($conn, $sql)`. *(Fixa't que no cal passar ni l'`id` ni `data_creacio` perquè MySQL els omple tots dos sols!)*.
+- **Tornar a la pàgina principal:** Un cop executat l'`INSERT`, perquè l'usuari no es quedi encallat en una pantalla en blanc, fes servir la instrucció `header("Location: index.php");` al final de `afegir_tasca.php`.
+- **Comprovació:** Escriu *"Netejar el cotxe"* al formulari, prem Afegir i ves a **phpMyAdmin** (pestanya *Examina*) per verificar que la fila ha aparegut a la taula.
+:::
+
+---
+
+## Etapa 3: Llegir i mostrar les tasques a la pantalla (`READ`)
+
+Ja tens tasques guardades a la caixa forta (MySQL), però l'usuari encara no les veu a la web. Ara toca fer el viatge de tornada: de la base de dades cap a `index.php`.
+
+### Què has d'aconseguir?
+1. Dins de `index.php` (a sota del formulari), connectar-te a la base de dades i demanar totes les files de la taula `tasques`.
+2. Recórrer els resultats fila per fila i imprimir-los dins d'una llista HTML (`<ul>` i `<li>`).
+
+:::tip[Pistes per a l'Etapa 3]
+Llegir dades de MySQL i pintar-les a la web sempre segueix exactament aquests **3 passos**:
+
+1. **Demanar les files a MySQL (`SELECT`):**
+   - Escriu la consulta `SELECT * FROM tasques` (pots afegir `ORDER BY id DESC` perquè les tasques més noves surtin dalt de tot).
+   - Quan l'executes amb `$resultat = mysqli_query($conn, $sql);`, la variable `$resultat` guarda **tota la taula sencera** en memòria, com si fos una caixa plena de fitxes.
+
+2. **Treure les fitxes d'una en una amb un bucle (`while`):**
+   - PHP no pot imprimir tota la caixa de cop; ha d'anar agafant **una fila cada vegada** fins que la caixa quedi buida.
+   - La funció `mysqli_fetch_assoc($resultat)` treu la següent fila i la desa dins `$fila`, on pots accedir a cada columna pel seu nom (`$fila['id']`, `$fila['tasca']`, etc.). Quan la caixa queda buida, el bucle s'atura sol:
+   ```php
+   while ($fila = mysqli_fetch_assoc($resultat)) {
+       // A cada volta del bucle, $fila representa UNA fila de la teva taula
+   }
+   ```
+
+3. **Construir l'HTML com un "sandvitx" i cosir peces amb el punt (`.`):**
+   - **Com funciona el punt `.` en PHP?** Quan fas `echo`, has de juntar text HTML fix (entre cometes) amb el valor variable que ve de la base de dades (sense cometes). Pensa-hi com tres vagons d'un tren enganxats amb punts:
+     ```text
+       "<li>"      .      $fila['tasca']      .      "</li>"
+     [etiqueta inici]   [text de la BBDD]        [etiqueta final]
+     ```
+   - **On van `<ul>` i `</ul>`? L'estructura de "sandvitx":**
+     Una llista HTML només té **una** etiqueta d'obertura `<ul>` al principi i **una** de tancament `</ul>` al final. El bucle `while` va **al mig** per repetir només els `<li>`:
+     ```php
+     echo "<ul>"; // 1. Obrim la llista UNA SOLA VEGADA (fora del bucle)
+
+     while ($fila = mysqli_fetch_assoc($resultat)) {
+         // 2. A dins del bucle, imprimim un <li> per cada tasca
+         echo "<li>" . $fila['tasca'] . "</li>";
+     }
+
+     echo "</ul>"; // 3. Tanquem la llista UNA SOLA VEGADA (fora del bucle)
+     ```
+   - **Error típic a evitar:** Si poses `echo "<ul>";` *dins* del `while`, crearàs una llista separada per a cada tasca!
+:::
+
+<SimuladorWhilePHP />
+
+---
+
+## Etapa 4: Crear un botó d'esborrar al costat de cada tasca
+
+Imagina que a la teva llista hi tens dues tasques que es diuen exactament igual (*"Comprar pa"*). Si prems un botó *Esborrar*, **com sabrà PHP quina de les dues files ha d'eliminar?**
+
+Per això vam crear la columna **`id`** a l'Etapa 1: cada fila té un número únic irrepetible (`1`, `2`, `3`...). El que farem ara és penjar un **"tiquet amb el seu `id`"** al costat de cada tasca.
+
+### Què has d'aconseguir?
+1. Modificar el bucle `while` de l'Etapa 3 perquè, al costat del text de cada tasca, hi dibuixi també un botó o enllaç **Esborrar** (*Delete*).
+2. Fer que cada botó porti enganxat l'`id` concret d'aquella fila i apunti cap al fitxer `esborrar_tasca.php`.
+
+:::tip[Pistes per a l'Etapa 4]
+1. **Com s'envia una dada a través d'un enllaç (`?id=...`)?**
+   - Fins ara hem enviat dades amb un formulari (`POST`). Però també podem enviar una dada petita directament **enganxada al final d'una adreça web (URL)** posant un signe d'interrogació `?`, el nom de la variable i el seu valor:
+     ```text
+     esborrar_tasca.php?id=3
+     ```
+   - Quan l'usuari clica aquest enllaç, el navegador obre `esborrar_tasca.php` i li entrega el paquet `id = 3`.
+
+2. **Com "cosir" l'enllaç dins de l'`echo` del bucle `while`?**
+   - Igual que a l'Etapa 3, has de muntar un tren de vagons enganxats amb punts (`.`), intercalant text HTML fix amb les variables `$fila['tasca']` i `$fila['id']`:
+     ```text
+     "<li>" . $fila['tasca'] . " <a href='esborrar_tasca.php?id=" . $fila['id'] . "'>Esborrar</a></li>"
+     ```
+   - **Truc amb les cometes:** Fixa't que com que tot l'`echo` va entre **cometes dobles (`"..."`)**, l'atribut `href='...'` de dins el posem amb **cometes simples (`'...'`)** perquè PHP no es confongui i sàpiga on comença i on acaba la cadena de text!
+
+3. **Com provar si ho has fet bé (abans de programar l'esborrat):**
+   - Guarda `index.php` i recarrega la pàgina al navegador.
+   - Passa el ratolí per sobre del botó *Esborrar* de la primera tasca i mira a la cantonada inferior esquerra del navegador (o fes-hi clic i mira la barra d'adreces). Si per a la primera tasca diu `esborrar_tasca.php?id=1` i per a la segona `esborrar_tasca.php?id=2`, aquesta etapa està superada! *(És normal que ara et doni error "Not Found" en clicar-hi, perquè crearem `esborrar_tasca.php` a l'Etapa 5).*
+:::
+
+<SimuladorEnllacId />
+---
+
+## Etapa 5: Prémer el botó esborrar i que desaparegui (`DELETE`)
+
+Ja tens el botó *Esborrar* enviant el número de fila per la URL (`esborrar_tasca.php?id=3`). Ara només falta programar el fitxer `esborrar_tasca.php` perquè rebi aquest número, elimini la fila a MySQL i torni a carregar `index.php`.
+
+### Què has d'aconseguir?
+1. Crear `esborrar_tasca.php` i connectar-lo amb `connexio.php`.
+2. Comprovar de forma segura que realment ha arribat un `id` per la URL.
+3. Executar la consulta SQL per eliminar **només** aquella fila.
+4. Redirigir immediatament l'usuari cap a `index.php` perquè vegi la llista actualitzada.
+
+:::tip[Pistes per a l'Etapa 5]
+1. **Recollir la dada de la URL (`$_GET`):**
+   - A diferència del formulari de l'Etapa 2 (que viatjava ocult amb `$_POST`), ara el número viatja visible a l'adreça web (`?id=3`). Per capturar-lo en PHP fem servir **`$_GET['id']`**.
+
+2. **Per què posem `if (isset($_GET['id']))`? El "porter de seguretat":**
+   - Imagina que algú escriu directament `localhost/gestor-tasques/esborrar_tasca.php` a la barra del navegador **sense** posar `?id=...` al final. Si PHP intenta llegir `$_GET['id']` quan no existeix, mostrarà un error groc (*Warning: Undefined array key "id"*).
+   - La funció **`isset(...)`** (*is set* = "està definit?") fa una pregunta de Sí o No: **«Ha arribat realment el paquet `id` a la URL?»**.
+     ```php
+     if (isset($_GET['id'])) {
+         // Només entrem aquí si la URL porta ?id=...
+         // 1. Guardem $_GET['id'] en una variable $id
+         // 2. Preparem i executem la consulta DELETE
+     }
+     ```
+   - Si no ha arribat cap `id`, PHP simplement se salta el bloc `if` sense trencar-se i passa directament a la redirecció final.
+
+3. **La regla d'or de `DELETE`: mai sense `WHERE`!**
+   - Per esborrar una fila a SQL fem servir `DELETE FROM tasques WHERE id = $id`.
+   - **Molt important:** No t'oblidis mai de posar la condició **`WHERE id = $id`**. Si executes `DELETE FROM tasques` sol, MySQL esborrarà **totes** les tasques de la base de dades de cop!
+
+4. **Efecte instantani amb `header(...)`:**
+   - Igual que a `afegir_tasca.php`, posa `header("Location: index.php");` al final del fitxer (fora de l'`if`). Així, quan l'usuari premi *Esborrar*, el navegador anirà a `esborrar_tasca.php`, eliminarà la fila i tornarà a `index.php` en mil·lèsimes de segon.
+:::
+
+<SimuladorEsborrarPHP />
+
+---
+
+## Repte d'ampliació (Opcional)
+
+Si ja has completat les 5 etapes i el teu gestor afegeix, llegeix i esborra tasques sense errors:
+- **Validació:** Evita que l'usuari pugui afegir una tasca buida si prem *Afegir* sense escriure res (pista: atribut `required` a l'HTML i funció `empty()` o `trim()` a PHP).
+- **Estat de la tasca (`UPDATE`):** Afegeix una columna `estat` (per defecte `'pendent'`) i un segon botó **Feta** que actualitzi la fila amb `UPDATE tasques SET estat = 'feta' WHERE id = $id` per ratllar-la amb CSS (`text-decoration: line-through`).

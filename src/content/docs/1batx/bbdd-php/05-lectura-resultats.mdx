@@ -9,16 +9,56 @@ Ja hem comprovat que el nostre formulari desa les dades dins de MySQL. Però un 
 
 Aquesta és la funció del fitxer **`PHP/resultats.php`** (al qual enllaçava el botó blau *Resultats* de `formulari.html`).
 
-## Pas 1: Creació del fitxer `PHP/resultats.php`
+---
 
-Crea el fitxer `resultats.php` dins de la carpeta `PHP/`. Observa que aquest fitxer barreja **HTML estàtic** (la capçalera de la pàgina i la primera fila `fila0` de la taula) amb un bloc **`<?php ... ?>`** que fabrica tantes files `<tr>` com alumnes hi hagi desats:
+## Com s'organitza `PHP/resultats.php`?
 
-1. **`SELECT * FROM materies`:** És la consulta SQL que demana a MySQL **totes les columnes (`*`)** de **totes les files** de la taula `materies`.
-2. **`mysqli_fetch_array($executa)`:** Aquesta funció agafa **una fila** del resultat de la consulta i la converteix en un array associatiu (`$llista['nom']`, `$llista['cognoms']`, etc.). Cada vegada que es crida, avança automàticament a la fila següent.
-3. **El bucle `while (...)`:** Repeteix el bloc d'instruccions `echo` mentre `mysqli_fetch_array` trobi files noves. Quan arriba al final de la taula i no queden més registres, retorna `false` i el bucle s'atura sol.
+Aquest fitxer té una estructura híbrida: comença com una pàgina **HTML normal** (que dibuixa el títol i la capçalera de la taula) i, just a dins de `<table>`, obre un bloc **`<?php ... ?>`** per omplir les files automàticament amb les dades de MySQL.
+
+Ho podem entendre en **3 passos**:
+
+### 1. La part fixa (HTML) vs. la part dinàmica (PHP)
+- **La capçalera (`<tr class="fila0">`):** És sempre igual, tant si hi ha 0 alumnes com 100. Per això l'escrivim directament en HTML amb les 5 columnes (`Nom`, `Cognoms`, `Mail`, `Curs`, `Matèria`).
+- **Les files de dades (`<tr>`):** No les podem escriure a mà perquè no sabem quants alumnes s'inscriuran. Les fabricarà PHP una per una.
+
+### 2. Connectar i demanar les dades (`SELECT`)
+Dins del bloc `<?php ... ?>`, seguim aquesta seqüència:
+1. **`include_once('db.php');` i `$conectar = conn();`**: Obrim la connexió amb la base de dades reutilitzant la funció que ja teníem feta.
+2. **`$sql = "SELECT * FROM materies";`**: L'asterisc `*` significa *"totes les columnes"*. Aquesta ordre demana a MySQL tots els registres guardats a la taula `materies`.
+3. **`$executa = mysqli_query($conectar, $sql);`**: Executa la consulta i guarda tot el paquet de resultats dins la variable `$executa`.
+
+### 3. Recórrer els resultats amb `while` i dibuixar cel·les (`<td>`)
+Per convertir cada fila de MySQL en una fila de la nostra taula HTML, fem servir un bucle **`while`**:
+
+```php
+while ($llista = mysqli_fetch_array($executa)) {
+    echo "<tr>";
+        echo "<td>" . $llista['nom'] . "</td>";
+        echo "<td>" . $llista['cognoms'] . "</td>";
+        echo "<td>" . $llista['mail'] . "</td>";
+        echo "<td>" . $llista['curs'] . "</td>";
+        echo "<td>" . $llista['materia'] . "</td>";
+    echo "</tr>";
+}
+```
+
+- **Què fa `mysqli_fetch_array($executa)`?** Agafa **una sola fila** del paquet de resultats i la guarda dins `$llista`. A cada volta del bucle avança a la fila següent fins que s'acaben (moment en què retorna `false` i el bucle s'atura sol).
+- **Com es tradueix a HTML?** Per a cada alumne, PHP obre una fila (`<tr>`), crea 5 cel·les (`<td>...</td>`) amb el contingut de cada columna de la base de dades (`$llista['nom']`, `$llista['curs']`, etc.) i tanca la fila (`</tr>`).
+
+<SimuladorBucleResultats />
+
+:::tip[Per què fem servir `while` en lloc d'un bucle `for`?]
+Com que no sabem per endavant quants alumnes s'hauran inscrit al formulari (avui en poden ser 3 i demà 45), un bucle **`while`** és ideal: s'adapta automàticament al nombre exacte de files que hi hagi a MySQL en cada moment.
+:::
+
+---
+
+## Codi complet de `PHP/resultats.php`
+
+Intenta muntar el fitxer seguint l'estructura anterior. Si t'encalles amb alguna cometa o punt i coma, desplega aquesta caixa per comprovar el codi sencer:
 
 <details>
-<summary>Fes clic aquí per veure o comprovar el codi sencer de <code>PHP/resultats.php</code></summary>
+<summary>Fes clic aquí per veure el codi complet de <code>PHP/resultats.php</code></summary>
 
 ```php
 <!DOCTYPE html>
@@ -40,10 +80,12 @@ Crea el fitxer `resultats.php` dins de la carpeta `PHP/`. Observa que aquest fit
             <th>Nom</th>
             <th>Cognoms</th>
             <th>Mail</th>
+            <th>Curs</th>
             <th>Matèria</th>
         </tr>
         
         <?php
+
         // Realitzem la connexió a la base de dades
         include_once('db.php');
         $conectar = conn();
@@ -54,11 +96,34 @@ Crea el fitxer `resultats.php` dins de la carpeta `PHP/`. Observa que aquest fit
 
         // Recorrem fila per fila mentre hi hagi registres a la consulta
         while ($llista = mysqli_fetch_array($executa)) {
+            
             echo "<tr>";
-                echo "<td>" . $llista['nom'] . "</td>";
-                echo "<td>" . $llista['cognoms'] . "</td>";
-                echo "<td>" . $llista['mail'] . "</td>";
-                echo "<td>" . $llista['materia'] . "</td>";
+
+                // Mostrem la variable nom en forma de taula
+                echo "<td>";
+                    echo $llista['nom'];
+                echo "</td>";
+        
+                // Mostrem la variable cognoms en forma de taula
+                echo "<td>";
+                    echo $llista['cognoms'];
+                echo "</td>";
+
+                // Mostrem la variable mail en forma de taula
+                echo "<td>";
+                    echo $llista['mail'];
+                echo "</td>";
+
+                // Mostrem la variable curs en forma de taula
+                echo "<td>";
+                    echo $llista['curs'];
+                echo "</td>";
+
+                // Mostrem la variable materia en forma de taula
+                echo "<td>";
+                    echo $llista['materia'];
+                echo "</td>";
+                
             echo "</tr>";
         }
         ?>
@@ -69,12 +134,6 @@ Crea el fitxer `resultats.php` dins de la carpeta `PHP/`. Observa que aquest fit
 
 </details>
 
-<SimuladorBucleResultats />
-
-:::tip[Per què fem servir `while` en lloc d'un bucle `for`?]
-Com que no sabem per endavant quants alumnes s'hauran inscrit al formulari (avui en poden ser 3 i demà 45), un bucle **`while`** és ideal: s'adapta automàticament al nombre exacte de files que hi hagi a MySQL en cada moment.
-:::
-
 ---
 
 ## Prova final del projecte complet
@@ -84,4 +143,4 @@ Comprova ara el funcionament de tota l'aplicació de principi a fi:
 1. Obre `http://localhost/projecte_materies/HTML/formulari.html` al navegador.
 2. Inscriu un parell d'alumnes nous i prem **Enviar**.
 3. Torna enrere i fes clic al botó **Resultats** (o entra directament a `http://localhost/projecte_materies/PHP/resultats.php`).
-4. Hauries de veure la taula amb els estils de `formulari.css` (capçalera blau fort i files salmó) mostrant tots els registres de la base de dades!
+4. Hauries de veure la taula amb els estils de `formulari.css` mostrant tots els registres de la base de dades, inclosa la columna **Curs**!

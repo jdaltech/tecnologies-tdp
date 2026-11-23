@@ -28,12 +28,13 @@
   </div>
 
   <div class="cols-grid" id="sql-cols-grid">
+    <!-- FILA 1: 3 botons -->
     <button type="button" class="col-card active" data-col="id">
       <div class="col-top">
         <span class="col-name">id</span>
         <span class="col-type">INT (PK · A_I)</span>
       </div>
-      <span class="col-hint">Identificador únic automàtic</span>
+      <span class="col-hint">Generat sol per la BBDD</span>
     </button>
 
     <button type="button" class="col-card" data-col="nom">
@@ -52,12 +53,21 @@
       <span class="col-hint">Cognoms de l'alumne/a</span>
     </button>
 
+    <!-- FILA 2: 3 botons -->
     <button type="button" class="col-card" data-col="mail">
       <div class="col-top">
         <span class="col-name">mail</span>
-        <span class="col-type">VARCHAR(100)</span>
+        <span class="col-type">VARCHAR(100) · UNIQUE</span>
       </div>
-      <span class="col-hint">Correu electrònic</span>
+      <span class="col-hint">Identificador únic</span>
+    </button>
+
+    <button type="button" class="col-card" data-col="curs">
+      <div class="col-top">
+        <span class="col-name">curs</span>
+        <span class="col-type">VARCHAR(50)</span>
+      </div>
+      <span class="col-hint">Curs seleccionat</span>
     </button>
 
     <button type="button" class="col-card" data-col="materia">
@@ -82,7 +92,8 @@ CREATE TABLE materies (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nom VARCHAR(50) NOT NULL,
   cognoms VARCHAR(100) NOT NULL,
-  mail VARCHAR(100) NOT NULL,
+  mail VARCHAR(100) NOT NULL UNIQUE,
+  curs VARCHAR(50) NOT NULL,
   materia VARCHAR(50) NOT NULL
 );</code></pre>
   </details>
@@ -175,20 +186,21 @@ CREATE TABLE materies (
     margin: 0 0.25rem;
   }
 
+  /* 3 columnes a dalt i 3 a baix */
   .cols-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.65rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
     margin-bottom: 1rem;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 720px) {
     .cols-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 480px) {
     .cols-grid {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -200,7 +212,7 @@ CREATE TABLE materies (
     background-color: #1e293b;
     border: 2px solid #334155;
     border-radius: 8px;
-    padding: 0.75rem;
+    padding: 0.8rem;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -268,6 +280,7 @@ CREATE TABLE materies (
     padding: 0.1rem 0.45rem;
     border-radius: 4px;
     margin-right: 0.35rem;
+    margin-bottom: 0.25rem;
   }
 
   .sql-details {
@@ -310,18 +323,21 @@ CREATE TABLE materies (
     if (!grid || !inspector) return;
 
     const info: Record<string, string> = {
-      id: `<strong>Columna <code>id</code> (Opcional però molt recomanable):</strong><br/>
+      id: `<strong>Columna <code>id</code> (Generada automàticament per la BBDD):</strong><br/>
            <span class="pill">Tipus: INT</span> <span class="pill">Índex: PRIMARY</span> <span class="pill">Marca: A_I (Auto Increment)</span><br/>
-           Serveix perquè MySQL assigni automàticament un número únic (1, 2, 3...) a cada inscripció, encara que dos alumnes tinguin el mateix nom.`,
+           No es demana al formulari HTML. La base de dades assigna automàticament un número correlatiu (<code>1</code>, <code>2</code>, <code>3</code>...) cada vegada que s'insereix un alumne nou.`,
       nom: `<strong>Columna <code>nom</code>:</strong><br/>
             <span class="pill">Tipus: VARCHAR</span> <span class="pill">Longitud: 50</span><br/>
             Desarà el text escrit a l'<code>&lt;input name="nom"&gt;</code>. <code>VARCHAR(50)</code> permet cadenes de text de fins a 50 caràcters.`,
       cognoms: `<strong>Columna <code>cognoms</code>:</strong><br/>
                 <span class="pill">Tipus: VARCHAR</span> <span class="pill">Longitud: 100</span><br/>
                 Desarà el text escrit a l'<code>&lt;input name="cognoms"&gt;</code>. Li donem 100 caràcters de marge perquè hi càpiguen dos cognoms compostos.`,
-      mail: `<strong>Columna <code>mail</code>:</strong><br/>
-             <span class="pill">Tipus: VARCHAR</span> <span class="pill">Longitud: 100</span><br/>
-             Desarà l'adreça electrònica de l'<code>&lt;input name="mail"&gt;</code>.`,
+      mail: `<strong>Columna <code>mail</code> (Identificador únic de l'alumne):</strong><br/>
+             <span class="pill">Tipus: VARCHAR</span> <span class="pill">Longitud: 100</span> <span class="pill">Índex: UNIQUE</span><br/>
+             Desarà l'adreça electrònica de l'<code>&lt;input name="mail"&gt;</code>. En marcar-lo com a <code>UNIQUE</code>, MySQL impedeix que un mateix correu s'inscrigui dues vegades.`,
+      curs: `<strong>Columna <code>curs</code>:</strong><br/>
+             <span class="pill">Tipus: VARCHAR</span> <span class="pill">Longitud: 50</span><br/>
+             Desarà el curs seleccionat al formulari (<code>&lt;select name="curs"&gt;</code>, per exemple <code>1r Batxillerat</code>).`,
       materia: `<strong>Columna <code>materia</code>:</strong><br/>
                 <span class="pill">Tipus: VARCHAR</span> <span class="pill">Longitud: 50</span><br/>
                 Desarà el valor seleccionat al desplegable <code>&lt;select name="materia"&gt;</code> (<code>programacio</code>, <code>robotica</code>, etc.).`

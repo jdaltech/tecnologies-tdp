@@ -1,0 +1,454 @@
+---
+// src/components/SimuladorWhilePHP.astro
+---
+
+<div class="while-widget not-content">
+  <div class="widget-header">
+    <span class="badge">Laboratori interactiu · Bucle PHP</span>
+    <h4>Com funciona <code>while ($fila = mysqli_fetch_assoc($resultat))</code>?</h4>
+    <p class="guide">
+      1. Prem <strong>Següent volta del bucle</strong> per veure com <code>mysqli_fetch_assoc()</code> treu una fila cada vegada de la caixa <code>$resultat</code>. 
+      2. Observa com cada fitxa es transforma en una etiqueta <code>&lt;li&gt;</code> i com s'atura sol quan la caixa queda buida.
+    </p>
+  </div>
+
+  <div class="controls-bar">
+    <button type="button" id="btn-next-row" class="btn-primary">
+      ▶ Següent volta (<code>mysqli_fetch_assoc</code>)
+    </button>
+    <button type="button" id="btn-reset-while" class="btn-secondary">
+      ↺ Reiniciar consulta
+    </button>
+    <span id="loop-status" class="status-pill">Preparat · 3 files pendents a $resultat</span>
+  </div>
+
+  <div class="sim-grid">
+    <!-- COLUMNA 1: LA CAIXA $resultat (MYSQL) -->
+    <div class="sim-panel">
+      <div class="panel-title">1. Caixa <code>$resultat</code> (MySQL)</div>
+      <div class="cards-stack" id="stack-box">
+        <div class="data-card" data-idx="0">
+          <span class="card-id">id: 1</span>
+          <span class="card-txt">Netejar el cotxe</span>
+        </div>
+        <div class="data-card" data-idx="1">
+          <span class="card-id">id: 2</span>
+          <span class="card-txt">Fer exercici</span>
+        </div>
+        <div class="data-card" data-idx="2">
+          <span class="card-id">id: 3</span>
+          <span class="card-txt">Comprar pa</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA 2: LA VARIABLE $fila ACTUAL -->
+    <div class="sim-panel">
+      <div class="panel-title">2. Variable <code>$fila</code> en aquesta volta</div>
+      <div id="current-row-box" class="row-inspector empty">
+        <span>Prem el botó per treure la primera fila...</span>
+      </div>
+      <div class="php-line">
+        <code>echo "&lt;li&gt;" . $fila['tasca'] . "&lt;/li&gt;";</code>
+      </div>
+    </div>
+
+    <!-- COLUMNA 3: HTML GENERAT -->
+    <div class="sim-panel">
+      <div class="panel-title">3. HTML enviat al navegador</div>
+      <pre class="html-out"><code id="generated-html">&lt;ul&gt;
+  &lt;!-- Encara no s'ha executat cap volta --&gt;
+&lt;/ul&gt;</code></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initWhileSim() {
+    const btnNext = document.getElementById('btn-next-row') as HTMLButtonElement | null;
+    const btnReset = document.getElementById('btn-reset-while') as HTMLButtonElement | null;
+    const statusPill = document.getElementById('loop-status');
+    const rowBox = document.getElementById('current-row-box');
+    const htmlOut = document.getElementById('generated-html');
+    const stackCards = document.querySelectorAll('.while-widget .data-card');
+
+    if (!btnNext || !btnReset || !statusPill || !rowBox || !htmlOut) return;
+
+    const rows = [
+      { id: 1, tasca: 'Netejar el cotxe' },
+      { id: 2, tasca: 'Fer exercici' },
+      { id: 3, tasca: 'Comprar pa' }
+    ];
+
+    let step = 0;
+    let renderedLis: string[] = [];
+
+    function render() {
+      stackCards.forEach((card, idx) => {
+        card.classList.remove('active-card', 'consumed-card');
+        if (idx < step - 1) {
+          card.classList.add('consumed-card');
+        } else if (idx === step - 1) {
+          card.classList.add('active-card');
+        }
+      });
+
+      if (step === 0) {
+        statusPill!.textContent = 'Preparat · 3 files pendents a $resultat';
+        statusPill!.className = 'status-pill';
+        rowBox!.className = 'row-inspector empty';
+        rowBox!.innerHTML = '<span>Prem el botó per treure la primera fila...</span>';
+        htmlOut!.textContent = '<ul>\n  <!-- Encara no s\'ha executat cap volta -->\n</ul>';
+        btnNext!.disabled = false;
+      } else if (step <= rows.length) {
+        const current = rows[step - 1];
+        const remaining = rows.length - step;
+        statusPill!.textContent = `Volta ${step} · Queden ${remaining}${remaining === 1 ? 'fila' : 'files'}`;
+        statusPill!.className = 'status-pill running';
+
+        rowBox!.className = 'row-inspector active';
+        rowBox!.innerHTML = `
+          <div class="kv"><span>$fila['id']</span> <strong>${current.id}</strong></div>
+          <div class="kv"><span>$fila['tasca']</span> <strong>"${current.tasca}"</strong></div>
+        `;
+
+        const inner = renderedLis.map(t => `  <li>${t}</li>`).join('\n'); htmlOut!.textContent = `<ul>\n${inner}\n</ul>`;
+      } else {
+        statusPill!.textContent = 'Fi del bucle · mysqli_fetch_assoc() retorna false';
+        statusPill!.className = 'status-pill done';
+
+        rowBox!.className = 'row-inspector finished';
+        rowBox!.innerHTML = `
+          <strong>$fila = false (Caixa buida!)</strong>
+          <small>No queden més files: PHP surt del <code>while</code> i tanca <code>&lt;/ul&gt;</code>.</small>
+        `;
+        btnNext!.disabled = true;
+      }
+    }
+
+    btnNext.addEventListener('click', () => {
+      if (step < rows.length) {
+        renderedLis.push(rows[step].tasca);
+        step++;
+        render();
+      } else if (step === rows.length) {
+        step++;
+        render();
+      }
+    });
+
+    btnReset.addEventListener('click', () => {
+      step = 0;
+      renderedLis = [];
+      render();
+    });
+
+    render();
+  }
+
+  initWhileSim();
+  document.addEventListener('astro:after-swap', initWhileSim);
+</script>
+
+<style>
+  .while-widget,
+  .while-widget * {
+    box-sizing: border-box;
+  }
+
+  .while-widget {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #f8fafc;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .widget-header {
+    margin-bottom: 1.1rem;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #0f172a;
+    background: #facc15;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+  }
+
+  .widget-header h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .widget-header h4 code {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    font-size: 0.95rem;
+  }
+
+  .guide {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+
+  .guide code {
+    background: rgba(30, 41, 59, 0.9);
+    color: #facc15;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.84rem;
+  }
+
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .btn-primary {
+    padding: 0.55rem 0.95rem;
+    border-radius: 8px;
+    background: #38bdf8;
+    color: #082f49;
+    border: none;
+    font-weight: 700;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-primary code {
+    background: rgba(8, 47, 73, 0.14);
+    color: #082f49;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #475569;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover {
+    border-color: #38bdf8;
+    color: #f8fafc;
+  }
+
+  .status-pill {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+  }
+
+  .status-pill.running {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #7dd3fc;
+  }
+
+  .status-pill.done {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: #22c55e;
+    color: #86efac;
+  }
+
+  .sim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  @media (max-width: 860px) {
+    .sim-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .status-pill {
+      margin-left: 0;
+    }
+  }
+
+  .sim-panel {
+    min-width: 0;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .panel-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #38bdf8;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 0.4rem;
+  }
+
+  .panel-title code {
+    background: transparent;
+    color: #facc15;
+    text-transform: none;
+  }
+
+  .cards-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .data-card {
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.84rem;
+    transition: all 0.25s ease;
+  }
+
+  .card-id {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .card-txt {
+    color: #f8fafc;
+  }
+
+  .data-card.active-card {
+    border-color: #facc15;
+    background: rgba(250, 204, 21, 0.14);
+    transform: translateX(4px);
+  }
+
+  .data-card.consumed-card {
+    opacity: 0.35;
+    text-decoration: line-through;
+  }
+
+  .row-inspector {
+    min-height: 92px;
+    background: #0f172a;
+    border: 1px dashed #475569;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .row-inspector.empty {
+    color: #94a3b8;
+    text-align: center;
+  }
+
+  .row-inspector.active {
+    border-style: solid;
+    border-color: #facc15;
+  }
+
+  .row-inspector.finished {
+    border-style: solid;
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+  }
+
+  .row-inspector.finished strong {
+    color: #86efac;
+  }
+
+  .row-inspector.finished small {
+    color: #cbd5e1;
+    line-height: 1.4;
+  }
+
+  .row-inspector :global(.kv) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: monospace;
+    font-size: 0.82rem;
+  }
+
+  .row-inspector :global(.kv span) {
+    color: #94a3b8;
+  }
+
+  .row-inspector :global(.kv strong) {
+    color: #facc15;
+  }
+
+  .php-line {
+    margin-top: auto;
+    background: #020617;
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #4ade80;
+    overflow-x: auto;
+  }
+
+  .html-out {
+    margin: 0;
+    padding: 0.75rem;
+    background: #020617;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    min-height: 130px;
+    overflow-x: auto;
+  }
+</style>
