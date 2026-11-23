@@ -3,7 +3,7 @@ import starlight from '@astrojs/starlight';
 import starlightSidebarTopics from 'starlight-sidebar-topics';
 
 export default defineConfig({
-  site: 'https://jdal-tech.github.io',
+  site: 'https://jdaltech.github.io',
   base: '/tecnologies-tdp',
   integrations: [
     starlight({
