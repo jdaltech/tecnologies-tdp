@@ -7,6 +7,16 @@ export default defineConfig({
   base: '/tecnologies-tdp',
   integrations: [
     starlight({
+      head: [
+        {
+          tag: 'script',
+          attrs: {
+            'data-goatcounter': 'https://jdal.goatcounter.com/count',
+            async: true,
+            src: '//gc.zgo.at/count.js',
+          },
+        },
+      ],
       title: 'Tecnologies-TdP',
       tableOfContents: false, // 👈 Elimina la columna dreta "En aquesta pàgina" a tot el portal
       components: {
