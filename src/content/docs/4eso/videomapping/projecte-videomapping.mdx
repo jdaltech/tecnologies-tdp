@@ -299,13 +299,13 @@ Abans de lliurar el document de la Sessió 4, respon les dues preguntes finals s
     color: #0369a1;
   }
 
-  /* Graelles de 2 columnes per aprofitar l'amplada */
+  /* Graelles de 2 columnes alineades a dalt i a baix */
   .vm-media-grid,
   .vm-split-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
-    align-items: start;
+    align-items: stretch;
     margin: 1.25rem 0 !important;
   }
 
@@ -313,17 +313,55 @@ Abans de lliurar el document de la Sessió 4, respon les dues preguntes finals s
   .vm-split-col {
     min-width: 0;
     margin: 0 !important;
+    display: flex;
+    flex-direction: column;
   }
 
-  .vm-split-col pre {
+  /* Eliminem marges superiors ocults de Starlight al primer element de cada columna */
+  .vm-media-box > *:first-child,
+  .vm-split-col > *:first-child {
     margin-top: 0 !important;
   }
 
-  /* Contenidor responent 16:9 per al vídeo de YouTube */
+  /* Fem que el component VisualsVideoMapping ompli tota l'alçada de la seva columna */
+  .vm-media-box > div,
+  .vm-split-col > div:not(.expressive-code) {
+    height: 100%;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Bloc de codi (Prompt i p5.js): salt de línia automàtic i alçada completa */
+  .vm-split-col .expressive-code {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+  }
+  .vm-split-col .expressive-code figure {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+  }
+  .vm-split-col .expressive-code pre {
+    flex: 1;
+    margin: 0 !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-x: hidden !important;
+  }
+  .vm-split-col .expressive-code code {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+  }
+
+  /* Contenidor del vídeo de YouTube alineat amb el bloc esquerre */
   .vm-video-wrapper {
     position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
     overflow: hidden;
     border-radius: 12px;
     border: 1px solid #334155;
@@ -348,6 +386,10 @@ Abans de lliurar el document de la Sessió 4, respon les dues preguntes finals s
     .vm-media-grid,
     .vm-split-grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+    .vm-video-wrapper {
+      height: 0;
+      padding-bottom: 56.25%;
     }
     .vm-session-card {
       padding: 1.25rem;
