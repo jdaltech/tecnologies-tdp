@@ -22,7 +22,13 @@ export default defineConfig({
       components: {
         Footer: './src/components/Footer.astro',
       },
-      defaultLocale: 'ca',
+      defaultLocale: 'root',
+      locales: {
+        root: {
+          label: 'Català',
+          lang: 'ca',
+        },
+      },
       logo: {
         src: './src/assets/logo.png',
         alt: 'Logotip Tecnologies Torredelpalau',
