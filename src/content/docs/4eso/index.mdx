@@ -1,10 +1,13 @@
 ---
 title: "4t d'ESO — Tecnologies i Digitalització"
 description: "Continguts, projectes i activitats de 4t d'ESO de l'Institut Torre del Palau."
+tableOfContents: false
 ---
 
-<div class="construction-card">
-  <div class="construction-svg">
+import { Card } from '@astrojs/starlight/components';
+
+<div class="eso-hero-banner">
+  <div class="eso-hero-svg">
     <svg viewBox="0 0 220 180" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="esoGrad" x1="0" y1="0" x2="220" y2="180" gradientUnits="userSpaceOnUse">
@@ -39,42 +42,105 @@ description: "Continguts, projectes i activitats de 4t d'ESO de l'Institut Torre
     </svg>
   </div>
 
-  <span class="status-badge">MÒDUL EN CONSTRUCCIÓ</span>
-  <h2>Estem muntant les activitats de 4t d'ESO</h2>
-  <p>
-    Properament hi trobaràs els apunts interactius, activitats i reptes de <strong>Hardware, Àudio, Imatge, Fulls de càlcul, Intel·ligència Artificial i Disseny Web</strong>.
-  </p>
-
-  <div class="action-links">
-    <a href="/tecnologies-tdp/" class="btn-secondary">← Tornar a l'inici</a>
-    <a href="/tecnologies-tdp/1batx/" class="btn-primary">Explorar 1r de Batxillerat →</a>
+  <div class="eso-hero-text">
+    <span class="status-badge">4t ESO · DIGITALITZACIÓ</span>
+    <h2>Benvinguts/des a Digitalització</h2>
+    <p>
+      Selecciona un dels blocs temàtics per accedir als apunts interactius, activitats guiades i reptes del curs.
+    </p>
   </div>
 </div>
 
-<style>{`
-  .construction-card {
-    margin-top: 1.5rem;
-    padding: 2.5rem 2rem;
+<div class="eso-grid">
+  <Card title="Mòdul: Hardware" icon="laptop">
+    Arquitectura de l'ordinador, components interns, perifèrics i manteniment.
+
+    {/* [Accedir al mòdul de Hardware →](/tecnologies-tdp/4eso/hardware/) */}
+    <span class="status-soon">En construcció...</span>
+  </Card>
+
+  <Card title="Mòdul: Àudio" icon="seti:audio">
+    Digitalització del so, formats d'àudio, gravació i edició multipista.
+
+    {/* [Accedir al mòdul d'Àudio →](/tecnologies-tdp/4eso/audio/) */}
+    <span class="status-soon">En construcció...</span>
+  </Card>
+
+  <Card title="Mòdul: Imatge" icon="seti:image">
+    Imatge vectorial i mapa de bits, resolució, capes i tractament fotogràfic.
+
+    {/* [Accedir al mòdul d'Imatge →](/tecnologies-tdp/4eso/imatge/) */}
+    <span class="status-soon">En construcció...</span>
+  </Card>
+
+  <Card title="Mòdul: Videomapping" icon="puzzle">
+    Projecció audiovisual sobre superfícies, calibratge i creació escènica.
+
+    [Accedir al mòdul de Videomapping →](/tecnologies-tdp/4eso/videomapping/projecte-videomapping)
+    
+  </Card>
+
+  <Card title="Mòdul: Intel·ligència Artificial" icon="rocket">
+    Models generatius, entrenament de dades, enginyeria de prompts i ètica digital.
+
+    {/* [Accedir al mòdul d'IA →](/tecnologies-tdp/4eso/ia/) */}
+    <span class="status-soon">En construcció...</span>
+  </Card>
+
+  <Card title="Mòdul: Fulls de càlcul" icon="seti:csv">
+    Fórmules, funcions condicionals, referències i representació gràfica de dades.
+
+    {/* [Accedir al mòdul de Fulls de càlcul →](/tecnologies-tdp/4eso/fulls-calcul/) */}
+    <span class="status-soon">En construcció...</span>
+  </Card>
+
+  <Card title="Mòdul: Programació" icon="seti:javascript">
+    Pensament computacional, algorismes, estructures de control i desenvolupament web.
+
+    {/* [Accedir al mòdul de Programació →](/tecnologies-tdp/4eso/programacio/) */}
+    <span class="status-soon">En construcció...</span>
+  </Card>
+</div>
+
+<style is:global>{`
+  /* Sobreescrivim l'amplada màxima nativa de Starlight només en aquesta pàgina */
+  :root {
+    --sl-content-width: 100% !important;
+  }
+
+  .sl-markdown-content > * {
+    max-width: 100% !important;
+  }
+
+  .eso-hero-banner {
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem 2rem;
     border-radius: 16px;
     border: 1px solid rgba(0, 130, 193, 0.3);
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(15, 23, 42, 0.55);
     backdrop-filter: blur(8px);
-    text-align: center;
-    max-width: 680px;
   }
-  :root[data-theme='light'] .construction-card {
+  :root[data-theme='light'] .eso-hero-banner {
     background: rgba(248, 250, 252, 0.9);
   }
-  .construction-svg {
-    width: 200px;
-    margin: 0 auto 1rem auto;
-    filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.25));
+  .eso-hero-svg {
+    width: 145px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.25));
+  }
+  .eso-hero-text {
+    text-align: left;
   }
   .status-badge {
     display: inline-block;
-    padding: 0.3rem 0.85rem;
+    padding: 0.25rem 0.75rem;
     border-radius: 999px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     background: rgba(0, 130, 193, 0.2);
@@ -85,51 +151,69 @@ description: "Continguts, projectes i activitats de 4t d'ESO de l'Institut Torre
     color: #0082C1;
     background: rgba(0, 130, 193, 0.1);
   }
-  .construction-card h2 {
-    margin-top: 1rem !important;
-    margin-bottom: 0.75rem !important;
-    font-size: 1.5rem;
+  .eso-hero-text h2 {
+    margin-top: 0.65rem !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 1.35rem;
   }
-  .construction-card p {
+  .eso-hero-text p {
     color: #94a3b8;
-    line-height: 1.6;
-    margin-bottom: 1.75rem;
+    line-height: 1.55;
+    margin: 0;
+    font-size: 0.95rem;
   }
-  :root[data-theme='light'] .construction-card p {
+  :root[data-theme='light'] .eso-hero-text p {
     color: #475569;
   }
-  .action-links {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+
+  /* Graella pròpia amb 3 columnes exactament iguals */
+  .eso-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+    margin-top: 0 !important;
   }
-  .btn-primary, .btn-secondary {
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-decoration: none !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  .eso-grid > .card {
+    margin: 0 !important;
+    min-width: 0;
+    height: 100%;
   }
-  .btn-primary {
-    background: #0082C1;
-    color: #ffffff !important;
+
+  .eso-grid .title {
+    font-size: 1.1rem !important;
+    line-height: 1.3 !important;
+    word-break: break-word;
   }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 130, 193, 0.4);
+
+  @media (max-width: 1100px) {
+    .eso-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
-  .btn-secondary {
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    color: #e2e8f0 !important;
+
+  @media (max-width: 640px) {
+    .eso-hero-banner {
+      flex-direction: column;
+      text-align: center;
+      padding: 1.5rem 1.25rem;
+    }
+    .eso-hero-text {
+      text-align: center;
+    }
+    .eso-hero-svg {
+      width: 130px;
+    }
+    .eso-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
-  :root[data-theme='light'] .btn-secondary {
-    color: #1e293b !important;
-  }
-  .btn-secondary:hover {
-    transform: translateY(-2px);
-    border-color: #38bdf8;
+
+  .status-soon {
+    font-size: 0.85rem;
+    color: #71717a;
+    font-style: italic;
   }
 
   /* Animacions SVG */
@@ -155,4 +239,7 @@ description: "Continguts, projectes i activitats de 4t d'ESO de l'Institut Torre
     from { transform: translateX(0px); }
     to { transform: translateX(22px); }
   }
+  /* Amaga el títol H1 de Starlight en aquesta pàgina */
+  h1#_top {
+  display: none !important;
 `}</style>

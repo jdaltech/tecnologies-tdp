@@ -1,0 +1,383 @@
+---
+// src/components/VisualsVideoMapping.astro
+interface Props {
+  sessio: '1' | '2' | '3' | '4';
+}
+const { sessio } = Astro.props;
+---
+
+<div class="vm-widget not-content">
+  {sessio === '1' && (
+    <div class="vm-box">
+      <div class="vm-badge">Esquema visual · Diferència clau</div>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h5>Cinema tradicional (2D)</h5>
+          <svg viewBox="0 0 240 130" class="vm-svg">
+            <polygon points="20,65 110,25 110,105" fill="rgba(56, 189, 248, 0.18)" />
+            <circle cx="20" cy="65" r="6" fill="#38bdf8" />
+            <rect x="115" y="25" width="95" height="80" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+            <rect x="122" y="32" width="81" height="66" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-dasharray="4 3" />
+            <text x="162" y="69" fill="#e2e8f0" font-size="11" text-anchor="middle" font-family="sans-serif">Pantalla plana</text>
+          </svg>
+          <p>La imatge sempre és un rectangle pla sobre una tela o paret llisa.</p>
+        </div>
+
+        <div class="compare-card highlight">
+          <h5>VideoMapping (Volums 3D)</h5>
+          <svg viewBox="0 0 240 130" class="vm-svg">
+            <polygon points="20,65 125,22 125,108" fill="rgba(250, 204, 21, 0.16)" />
+            <circle cx="20" cy="65" r="6" fill="#facc15" />
+            <!-- Cub isomètric -->
+            <polygon points="165,22 205,42 165,62 125,42" fill="rgba(168, 85, 247, 0.35)" stroke="#c084fc" stroke-width="1.5" />
+            <polygon points="125,42 165,62 165,108 125,88" fill="rgba(56, 189, 248, 0.35)" stroke="#38bdf8" stroke-width="1.5" />
+            <polygon points="165,62 205,42 205,88 165,108" fill="rgba(34, 197, 94, 0.35)" stroke="#4ade80" stroke-width="1.5" />
+            <!-- Vèrtexs -->
+            <circle cx="165" cy="22" r="3.5" fill="#facc15" />
+            <circle cx="205" cy="42" r="3.5" fill="#facc15" />
+            <circle cx="165" cy="62" r="3.5" fill="#facc15" />
+            <circle cx="125" cy="42" r="3.5" fill="#facc15" />
+            <circle cx="125" cy="88" r="3.5" fill="#facc15" />
+            <circle cx="165" cy="108" r="3.5" fill="#facc15" />
+            <circle cx="205" cy="88" r="3.5" fill="#facc15" />
+          </svg>
+          <p>Deformem cada capa perquè encaixi amb les arestes reals d'un objecte.</p>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {sessio === '2' && (
+    <div class="vm-box">
+      <div class="vm-head-row">
+        <div>
+          <span class="vm-badge">Mini-simulador · Prova-ho abans de programar</span>
+          <h5>Arrossega els 4 cercles grocs per encaixar la projecció a la cara de la caixa</h5>
+        </div>
+        <button type="button" class="vm-btn" id="vm-toggle-h">Mode projecció (Tecla H)</button>
+      </div>
+      <div class="quad-stage" id="quad-stage">
+        <svg viewBox="0 0 420 210" class="quad-svg" id="quad-svg">
+          <!-- Caixa física objectiu (cara esquerra en perspectiva) -->
+          <polygon points="130,45 220,75 220,175 130,145" fill="#1e293b" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 4" />
+          <polygon points="220,75 300,45 300,145 220,175" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
+          <polygon points="130,45 210,18 300,45 220,75" fill="#1e293b" stroke="#475569" stroke-width="1.5" />
+          <text x="175" y="114" fill="#64748b" font-size="10" text-anchor="middle" font-family="sans-serif">Cara objectiu</text>
+
+          <!-- Capa projectada deformable -->
+          <polygon id="vm-quad-poly" points="60,35 160,35 160,125 60,125" fill="rgba(56, 189, 248, 0.35)" stroke="#38bdf8" stroke-width="2" />
+
+          <!-- 4 nodes arrossegables -->
+          <g id="vm-handles">
+            <circle class="vm-handle" data-idx="0" cx="60" cy="35" r="7" fill="#facc15" stroke="#0f172a" stroke-width="2" />
+            <circle class="vm-handle" data-idx="1" cx="160" cy="35" r="7" fill="#facc15" stroke="#0f172a" stroke-width="2" />
+            <circle class="vm-handle" data-idx="2" cx="160" cy="125" r="7" fill="#facc15" stroke="#0f172a" stroke-width="2" />
+            <circle class="vm-handle" data-idx="3" cx="60" cy="125" r="7" fill="#facc15" stroke="#0f172a" stroke-width="2" />
+          </g>
+        </svg>
+      </div>
+    </div>
+  )}
+
+  {sessio === '3' && (
+    <div class="vm-box">
+      <div class="vm-head-row">
+        <div>
+          <span class="vm-badge">Previsualització en directe · Codi p5.js</span>
+          <h5>Així es veurà l'animació geomètrica projectada sobre la caixa</h5>
+        </div>
+        <div class="vm-btn-group">
+          <button type="button" class="vm-btn" id="p5-color-btn">Canviar color neó</button>
+        </div>
+      </div>
+      <div class="p5-preview-wrap">
+        <canvas id="vm-p5-canvas" width="260" height="170"></canvas>
+        <p class="p5-caption">El fons fosc deixa passar el rastre (<code>alpha = 35</code>) creant l'efecte d'estela lluminosa.</p>
+      </div>
+    </div>
+  )}
+
+  {sessio === '4' && (
+    <div class="vm-box">
+      <div class="vm-badge">Checklist de posada en escena · 1 minut abans de sortir</div>
+      <div class="stage-checks" id="stage-checks">
+        <label><input type="checkbox" /> <span>Pantalla en mode <strong>Estendre</strong> (<code>Windows + P</code>) i finestra al projector.</span></label>
+        <label><input type="checkbox" /> <span>Navegador a pantalla completa (<code>F11</code>).</span></label>
+        <label><input type="checkbox" /> <span>Vèrtexs ajustats als límits de les caixes blanques.</span></label>
+        <label><input type="checkbox" /> <span>Mode projecció activat (tecla <code>H</code>) i llums de l'aula apagats.</span></label>
+      </div>
+    </div>
+  )}
+</div>
+
+<script>
+  function initVideoMappingWidgets() {
+    // Simulador Sessió 2 (Quad arrossegable)
+    const svg = document.getElementById('quad-svg') as SVGSVGElement | null;
+    const poly = document.getElementById('vm-quad-poly');
+    const handles = document.querySelectorAll('.vm-handle');
+    const toggleH = document.getElementById('vm-toggle-h');
+    const handlesGroup = document.getElementById('vm-handles');
+
+    if (svg && poly && handles.length === 4) {
+      const pts = [
+        { x: 60, y: 35 },
+        { x: 160, y: 35 },
+        { x: 160, y: 125 },
+        { x: 60, y: 125 }
+      ];
+      let activeIdx: number | null = null;
+
+      const updatePoly = () => {
+        poly.setAttribute('points', pts.map(p => `${p.x},${p.y}`).join(' '));
+        handles.forEach((h, i) => {
+          h.setAttribute('cx', String(pts[i].x));
+          h.setAttribute('cy', String(pts[i].y));
+        });
+      };
+
+      const getSvgPoint = (evt: PointerEvent) => {
+        const rect = svg.getBoundingClientRect();
+        return {
+          x: Math.max(10, Math.min(410, ((evt.clientX - rect.left) / rect.width) * 420)),
+          y: Math.max(10, Math.min(200, ((evt.clientY - rect.top) / rect.height) * 210))
+        };
+      };
+
+      handles.forEach(h => {
+        h.addEventListener('pointerdown', (e) => {
+          activeIdx = Number((e.target as Element).getAttribute('data-idx'));
+          (e.target as Element).setPointerCapture((e as PointerEvent).pointerId);
+        });
+      });
+
+      svg.addEventListener('pointermove', (e) => {
+        if (activeIdx === null) return;
+        pts[activeIdx] = getSvgPoint(e as PointerEvent);
+        updatePoly();
+      });
+
+      svg.addEventListener('pointerup', () => {
+        activeIdx = null;
+      });
+
+      if (toggleH && handlesGroup) {
+        let hidden = false;
+        toggleH.addEventListener('click', () => {
+          hidden = !hidden;
+          handlesGroup.style.display = hidden ? 'none' : 'block';
+          toggleH.textContent = hidden ? 'Mostrar controls (Tecla H)' : 'Mode projecció (Tecla H)';
+        });
+      }
+    }
+
+    // Previsualització Sessió 3 (Canvas tipus p5.js)
+    const canvas = document.getElementById('vm-p5-canvas') as HTMLCanvasElement | null;
+    const colorBtn = document.getElementById('p5-color-btn');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const colors = ['#00ffaa', '#38bdf8', '#facc15', '#f472b6'];
+      let cIdx = 0;
+      let frame = 0;
+
+      if (colorBtn) {
+        colorBtn.addEventListener('click', () => {
+          cIdx = (cIdx + 1) % colors.length;
+        });
+      }
+
+      const animate = () => {
+        if (!document.body.contains(canvas) || !ctx) return;
+        ctx.fillStyle = 'rgba(10, 15, 30, 0.16)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const size = 65 + Math.sin(frame * 0.05) * 45;
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(frame * 0.02);
+        ctx.strokeStyle = colors[cIdx];
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-size / 2, -size / 2, size, size);
+        ctx.restore();
+
+        frame++;
+        requestAnimationFrame(animate);
+      };
+      animate();
+    }
+  }
+
+  initVideoMappingWidgets();
+  document.addEventListener('astro:after-swap', initVideoMappingWidgets);
+</script>
+
+<style>
+  .vm-widget, .vm-widget * {
+    box-sizing: border-box;
+  }
+
+  .vm-widget {
+    margin: 1rem 0 1.25rem;
+  }
+
+  .vm-box {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+    color: #f8fafc;
+  }
+
+  .vm-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.45rem;
+  }
+
+  .vm-box h5 {
+    margin: 0 0 0.5rem;
+    font-size: 0.92rem;
+    color: #f1f5f9;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  @media (max-width: 640px) {
+    .compare-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .compare-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+
+  .compare-card.highlight {
+    border-color: rgba(250, 204, 21, 0.5);
+  }
+
+  .compare-card p {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+  }
+
+  .vm-svg {
+    width: 100%;
+    height: 115px;
+    background: #020617;
+    border-radius: 6px;
+  }
+
+  .vm-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
+  .vm-btn {
+    background: #1e293b;
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, 0.45);
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .vm-btn:hover {
+    background: rgba(250, 204, 21, 0.15);
+  }
+
+  .quad-stage {
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .quad-svg {
+    width: 100%;
+    height: 195px;
+    display: block;
+    touch-action: none;
+  }
+
+  .vm-handle {
+    cursor: grab;
+  }
+
+  .vm-handle:active {
+    cursor: grabbing;
+  }
+
+  .p5-preview-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: #020617;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #334155;
+  }
+
+  #vm-p5-canvas {
+    border-radius: 6px;
+    border: 1px solid #1e293b;
+    flex-shrink: 0;
+  }
+
+  .p5-caption {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    max-width: 340px;
+    line-height: 1.45;
+  }
+
+  .stage-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.25rem;
+  }
+
+  .stage-checks label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.84rem;
+    color: #e2e8f0;
+    background: #1e293b;
+    padding: 0.45rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .stage-checks input {
+    accent-color: #38bdf8;
+    width: 15px;
+    height: 15px;
+  }
+</style>

@@ -1,0 +1,356 @@
+---
+title: Projecte VideoMapping amb Web i IA
+description: Guia pas a pas per investigar, crear la teva pròpia eina de projecció amb Intel·ligència Artificial, calibrar volums físics i presentar el resultat a l'aula.
+---
+
+import VisualsVideoMapping from '../../../../components/VisualsVideoMapping.astro';
+import { LinkCard, Card, Aside } from '@astrojs/starlight/components';
+
+<div class="vm-intro-banner">
+  <p>
+    En aquest projecte de <strong>4 sessions</strong> aprendràs què és el <em>videomapping</em>, programaràs la teva pròpia aplicació web de projecció amb l'ajuda de <strong>Gemini IA</strong>, calibraràs volums físics amb caixes de cartró i presentaràs la instal·lació final a l'aula.
+  </p>
+</div>
+
+<div class="vm-session-card">
+
+## Sessió 1: Què és el VideoMapping?
+
+<div class="vm-meta-row">
+  <span class="vm-pill">⏱️ Durada: 1 hora</span>
+  <span class="vm-pill">🎯 Objectiu: Recerca d'informació i anàlisi d'exemples</span>
+</div>
+
+<LinkCard
+  title="Obrir Google Docs — Sessió 1"
+  description="Document de treball per a la recerca i anàlisi d'exemples"
+  href="https://docs.google.com/document/d/1dyaGopr6AWr6uzmX4SZwJAfv_JnTv0-owzcbi89s9EQ/edit?usp=sharing"
+  target="_blank"
+/>
+
+**1. Obre el document de treball**  
+Fes clic a l'enllaç superior (**«Obrir Google Docs — Sessió 1»**) o accedeix a Google Classroom per obrir la teva còpia del document. Omple les teves dades personals abans de començar.
+
+<div class="vm-media-grid">
+  <div class="vm-media-box">
+    <VisualsVideoMapping sessio="1" />
+  </div>
+  <div class="vm-media-box">
+    <div class="vm-video-wrapper">
+      <iframe
+        src="https://www.youtube.com/embed/loB62JullLM"
+        title="Exemple de VideoMapping"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
+</div>
+
+**2. Investiga el concepte i el programari gratuït**
+- **Definició:** Cerca què és el *videomapping* (o *projection mapping*) i explica amb les teves paraules en 3 o 4 línies en què es diferencia d'una projecció de cinema tradicional sobre una pantalla plana.
+- **Eines existents:** Busca 3 programes gratuïts o de codi obert que s'utilitzin per fer videomapping (per exemple: *MapMap, HeavyM Free, LPMT, Splash, VPT 8*...) i anota a la taula per a quin sistema operatiu serveixen i què permeten fer.
+
+**3. Analitza 3 exemples reals en vídeo**  
+Busca a YouTube o Vimeo tres vídeos que encaixin amb aquestes categories i enganxa'n els enllaços al document:
+- **Vídeo 1 (Gran format):** Una projecció espectacular sobre la façana d'un edifici històric o monument.
+- **Vídeo 2 (Complex / Objectes):** Projecció sobre cotxes, escenaris teatrals o estructures en moviment.
+- **Vídeo 3 (Senzill amb caixes):** Busca *"cardboard box projection mapping"*. Observa com es projecta sobre caixes de cartró apilades, perquè serà el nostre punt de partida a l'aula.
+
+**4. Deducció dels requisits tècnics**  
+A l'últim apartat del document, escriu **3 condicions indispensables** que necessitarem a l'aula (il·luminació de la sala, color de les superfícies, posició del projector, fons de la imatge...).
+
+</div>
+
+<div class="vm-session-card">
+
+## Sessió 2: Crea la teva App web amb Gemini IA
+
+<div class="vm-meta-row">
+  <span class="vm-pill">⏱️ Durada: 1 hora</span>
+  <span class="vm-pill">💻 Objectiu: Programació web (HTML, CSS i JavaScript)</span>
+</div>
+
+<LinkCard
+  title="Obrir Google Docs — Sessió 2"
+  description="Document per recollir el prompt, les millores i la captura de l'app"
+  href="https://docs.google.com/document/d/1Zturv3Zd1U8qyIa8FSppqBpSugEy3mgDiE_hC-UK0A/edit?usp=sharing"
+  target="_blank"
+/>
+
+**1. Redacta el teu Prompt inicial per a Gemini**  
+Obre **Gemini** i demana-li que programi una aplicació web autocontinguda per fer videomapping. Pots fer servir aquesta plantilla com a base, recordant posar-hi **el teu nom**:
+
+<div class="vm-split-grid">
+  <div class="vm-split-col">
+
+```text
+Actua com a desenvolupador web. Crea una aplicació autocontinguda en un sol fitxer HTML (amb CSS i JavaScript pur) per fer videomapping educatiu al navegador.
+Requisits obligatoris:
+1. El títol visible del panell d'eines ha de ser "VideoMapping de [EL TEU NOM]".
+2. El fons de pantalla ha de ser negre pur (#000000).
+3. Ha de permetre afegir múltiples capes rectangulars ("Quads") i arrossegar-les pel centre per moure-les.
+4. Cada capa ha de tenir 4 cercles a les cantonades que es puguin arrossegar amb el ratolí per deformar la perspectiva (aplicant transformacions CSS matrix3d / homografia).
+5. Per a cada capa seleccionada, he de poder triar un color sòlid o carregar una imatge/vídeo local des del meu ordinador que s'adapti al 100% dins la forma.
+6. Afegeix la tecla drecera 'H' per amagar el menú, els cercles de control i el cursor del ratolí quan activi el mode projecció.
+```
+
+  </div>
+  <div class="vm-split-col">
+    <VisualsVideoMapping sessio="2" />
+  </div>
+</div>
+
+**2. Desa el codi com a fitxer `.html` i executa'l**
+1. Copia tot el codi que t'hagi generat Gemini.
+2. Obre un editor de text pla (Bloc de notes, VS Code, TextEdit en text pla o Caret en Chromebook).
+3. Enganxa el codi i desa'l amb el nom **`videomapping_elteunom.html`** (assegura't que l'extensió sigui `.html` i no `.txt`).
+4. Fes doble clic sobre el fitxer per obrir-lo amb el navegador (Chrome, Edge o Firefox).
+
+**3. Prova, detecta errors i millora l'aplicació (Iteració)**  
+Comprova si l'aplicació fa tot el que li has demanat. Si alguna cosa falla (per exemple, no et deixa esborrar una capa, la imatge queda retallada o es bloqueja en sortir del mode projecció), torna a escriure a Gemini explicant l'error exacte perquè et doni el codi corregit.
+
+:::note[Documentació]
+Obre el **Google Docs de la Sessió 2**, enganxa el teu prompt inicial, anota les millores que has demanat a la IA i posa-hi una captura de pantalla de la teva aplicació funcionant.
+:::
+
+**4. Llista de verificació abans d'acabar la sessió**
+- [ ] El fitxer s'obre al navegador i es veu el meu nom al títol del menú.
+- [ ] Puc crear 2 o 3 capes independents i deformar-ne les 4 cantonades.
+- [ ] Puc posar colors i carregar imatges o vídeos des del disc dur.
+- [ ] En prémer la tecla **`H`** desapareixen tots els controls i queda només el fons negre.
+
+</div>
+
+<div class="vm-session-card">
+
+## Sessió 3: Caixes, calibratge i continguts
+
+<div class="vm-meta-row">
+  <span class="vm-pill">⏱️ Durada: 1 hora</span>
+  <span class="vm-pill">📦 Objectiu: Muntatge físic, mesures i rúbrica d'autoavaluació</span>
+</div>
+
+<LinkCard
+  title="Obrir Google Docs — Sessió 3"
+  description="Document de treball per al calibratge"
+  href="https://docs.google.com/document/d/1R9LZd-jqYID26KrhS29SVzPNNg9rixOd1naTV8J6MHQ/edit?usp=sharing"
+  target="_blank"
+/>
+
+**1. Prepara l'estructura física de caixes**
+- Combina 2 o 3 caixes de diferents mides per crear un volum interessant (esglaonat, en relleu o en angle).
+- **Color de les cares:** Si les caixes són de cartró marró fosc, folra les cares visibles amb **folis blancs**. El blanc reflecteix molt millor la llum del projector.
+- **Fixació:** Enganxa la base de les caixes a la taula amb cinta de pintor perquè no es moguin ni un mil·límetre durant el calibratge.
+
+**2. Connecta el projector i mesura l'espai**
+1. Connecta l'ordinador al projector i selecciona el mode **«Estendre pantalla»** (`Windows + P`).
+2. Arrossega la finestra del navegador amb la teva app cap a la pantalla del projector i prem **`F11`** per posar-la a pantalla completa.
+3. Mesura la distància entre el projector i les caixes i anota-la al Google Docs de la Sessió 3.
+
+**3. Calibra els vèrtexs i afegeix continguts (Imatges o p5.js)**  
+Arrossega les 4 cantonades de cada capa fins que coincideixin exactament amb les arestes físiques de les caixes. Després, assigna a cada cara una imatge, un vídeo en bucle o una animació amb **p5.js**.
+
+<div class="vm-split-grid">
+  <div class="vm-split-col">
+    <VisualsVideoMapping sessio="3" />
+  </div>
+  <div class="vm-split-col">
+
+:::tip[Repte creatiu: Codi p5.js]
+Si la teva app suporta codi `p5.js` en mode instància, prova d'enganxar aquest codi per projectar una animació geomètrica generada per programació (et servirà de preparació per a Processing):
+:::
+
+```javascript
+p.setup = function() {
+  p.createCanvas(400, 400);
+};
+
+p.draw = function() {
+  p.background(10, 15, 30, 35);
+  p.noFill();
+  p.stroke(0, 255, 170);
+  p.strokeWeight(4);
+  let mida = 160 + p.sin(p.frameCount * 0.06) * 120;
+  p.rectMode(p.CENTER);
+  p.push();
+  p.translate(200, 200);
+  p.rotate(p.frameCount * 0.02);
+  p.rect(0, 0, mida, mida);
+  p.pop();
+};
+```
+
+  </div>
+</div>
+
+**4. Omple la rúbrica d'autoavaluació**  
+Obre el **Google Docs de la Sessió 3** i completa la taula rúbrica d'autoavaluació (marcant el nivell en què et trobes en funcionament de l'app, precisió del calibratge, mode projecció i creativitat) abans de la mostra final.
+
+</div>
+
+<div class="vm-session-card">
+
+## Sessió 4: Mostra final a l'aula i coavaluació
+
+<div class="vm-meta-row">
+  <span class="vm-pill">⏱️ Durada: 1 hora</span>
+  <span class="vm-pill">🎬 Objectiu: Projecció amb els llums apagats i valoració entre iguals</span>
+</div>
+
+<LinkCard
+  title="Obrir Google Docs — Sessió 4"
+  description="Document de treball per a la coavaluació"
+  href="https://docs.google.com/document/d/1HTH57eZSVtUcQ2dv5hVvOGeNFi8YyXoUscpKvHMJswA/edit?usp=sharing"
+  target="_blank"
+/>
+
+**1. Preparació de la presentació (5 minuts per grup)**  
+Quan sigui el vostre torn, col·loqueu l'estructura de caixes davant del projector, obriu la vostra aplicació web a pantalla completa (`F11`) i activeu el mode projecció (tecla `H`). Apagarem els llums de l'aula per veure l'efecte real.
+
+Durant la vostra intervenció heu d'explicar breument:
+- Com heu construït l'aplicació i quines millores li heu fet amb la IA.
+- Quin contingut heu projectat a cada cara de les caixes i quina dificultat tècnica heu resolt.
+
+<VisualsVideoMapping sessio="4" />
+
+**2. Avalua la resta de grups (Coavaluació)**  
+Obre el **Google Docs — Sessió 4** i, mentre presenten els companys, puntua de l'**1 al 4** aquests cinc aspectes:
+
+| Aspecte a valorar | Què hi has d'observar? |
+| :--- | :--- |
+| **1. Encaix a les caixes** | Les figures claven les cantonades i arestes sense que la llum s'escapi fora del cartró? |
+| **2. Animació / p5.js** | Hi ha moviment, vídeos en bucle o animacions creades amb codi, o només colors estàtics? |
+| **3. Creativitat i volums** | Aprofiten les diferents cares i profunditats de les caixes per crear un efecte visual atractiu? |
+| **4. Neteja visual** | Es veu un fons negre pur sense menús, punts de control ni fletxes del ratolí? |
+| **5. Explicació oral** | Expliquen amb claredat com funciona la seva app i el procés que han seguit? |
+
+**3. Reflexió final de tancament**  
+Abans de lliurar el document de la Sessió 4, respon les dues preguntes finals sobre quin projecte d'un altre grup t'ha agradat més i com connecta el que has après sobre coordenades 2D i `p5.js` amb la programació amb **Processing**.
+
+</div>
+
+<style is:global>{`
+  /* Amplada completa de la columna central de Starlight */
+  :root {
+    --sl-content-width: 100% !important;
+  }
+
+  .sl-markdown-content > * {
+    max-width: 100% !important;
+  }
+
+  /* Banner d'introducció */
+  .vm-intro-banner {
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #38bdf8;
+    background: rgba(15, 23, 42, 0.55);
+    margin-bottom: 1.75rem;
+  }
+  :root[data-theme='light'] .vm-intro-banner {
+    background: rgba(241, 245, 249, 0.9);
+  }
+  .vm-intro-banner p {
+    margin: 0 !important;
+    font-size: 1.02rem;
+    line-height: 1.6;
+  }
+
+  /* Contenidor de cada sessió */
+  .vm-session-card {
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    background: rgba(15, 23, 42, 0.35);
+  }
+  :root[data-theme='light'] .vm-session-card {
+    background: rgba(248, 250, 252, 0.85);
+    border-color: rgba(0, 130, 193, 0.25);
+  }
+
+  .vm-session-card > h2:first-child {
+    margin-top: 0 !important;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  }
+
+  /* Etiquetes de durada i objectiu */
+  .vm-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin: 0.85rem 0 1.25rem 0 !important;
+  }
+  .vm-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: rgba(0, 130, 193, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+  }
+  :root[data-theme='light'] .vm-pill {
+    background: rgba(0, 130, 193, 0.1);
+    color: #0369a1;
+  }
+
+  /* Graelles de 2 columnes per aprofitar l'amplada */
+  .vm-media-grid,
+  .vm-split-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+    margin: 1.25rem 0 !important;
+  }
+
+  .vm-media-box,
+  .vm-split-col {
+    min-width: 0;
+    margin: 0 !important;
+  }
+
+  .vm-split-col pre {
+    margin-top: 0 !important;
+  }
+
+  /* Contenidor responent 16:9 per al vídeo de YouTube */
+  .vm-video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    margin: 0 !important;
+  }
+  .vm-video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* Taula de coavaluació a amplada completa */
+  .vm-session-card table {
+    width: 100%;
+    display: table;
+  }
+
+  @media (max-width: 960px) {
+    .vm-media-grid,
+    .vm-split-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .vm-session-card {
+      padding: 1.25rem;
+    }
+  }
+`}</style>

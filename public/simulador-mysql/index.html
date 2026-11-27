@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador MySQL per a la Gestió Educativa</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN amb mode fosc per classe -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Aplicació immediata del tema abans de renderitzar (evita parpelleig blanc) -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('edudata_theme') || 'auto';
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (savedTheme === 'dark' || (savedTheme === 'auto' && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+
+  <style>
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    code, pre, .font-mono {
+      font-family: var(--font-mono);
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    .material-card {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .material-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      header, nav, .no-print, button:not(.print-show) {
+        display: none !important;
+      }
+      #view-resultats {
+        display: block !important;
+      }
+      .print-break-inside-avoid {
+        break-inside: avoid;
+      }
+    }
+
+    /* Estils del Footer del Portal */
+  .portal-footer {
+    max-width: 80rem;
+    margin: 3rem auto 0 auto;
+    padding: 1.5rem 1.5rem 2rem 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.82rem;
+    color: #475569;
+  }
+  .dark .portal-footer {
+    color: #94a3b8;
+    border-top-color: rgba(148, 163, 184, 0.2);
+  }
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+  .footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .footer-logo {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #0082C1;
+  }
+  .dark .footer-logo {
+    color: #38bdf8;
+  }
+  .footer-sub {
+    font-size: 0.78rem;
+  }
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+  }
+  .cc-badge {
+    display: inline-flex;
+    line-height: 0;
+    transition: opacity 0.2s ease;
+  }
+  .cc-badge:hover {
+    opacity: 0.85;
+  }
+  .license-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    line-height: 1.35;
+  }
+  .license-text strong,
+  .license-text a {
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .dark .license-text strong,
+  .dark .license-text a {
+    color: #e2e8f0;
+  }
+  .license-text a:hover {
+    color: #0082C1;
+    text-decoration: underline;
+  }
+  .dark .license-text a:hover {
+    color: #38bdf8;
+  }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900 dark:selection:bg-indigo-900 dark:selection:text-indigo-100 transition-colors duration-200">
+
+  <!-- CAPÇALERA SUPERIOR -->
+  <header class="bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 shadow-xs transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between py-2.5 gap-4">
+        
+        <!-- Logotip i Títol -->
+        <div class="flex items-center gap-3.5">
+          <!-- AQUÍ POTS POSAR LA ICONA/LOGO DE L'INSTITUT (64x64 px) -->
+          <div class="w-16 h-16 flex-shrink-0 rounded-xl  flex items-center justify-center text-white shadow-sm font-black text-2xl overflow-hidden">
+        <img src="/tecnologies-tdp/src/assets/logo.png">
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-slate-900 dark:text-white text-base sm:text-lg leading-tight">Simulador SQL</h1>
+              <span class="hidden sm:inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">Institut Torre del Palau · Terrassa</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Simulador de gestió de bases de dades de l'institut</p>
+          </div>
+        </div>
+
+        <!-- Progrés i Selector de Tema (Estil Astro Starlight) -->
+        <div class="flex items-center gap-4 sm:gap-5">
+          <div class="flex items-center gap-3">
+            <div class="text-right hidden md:block">
+              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Progrés global</span>
+              <span id="headerProgressText" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">0 de 25 assolits (0%)</span>
+            </div>
+            <div class="w-24 sm:w-32 bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-200 dark:border-slate-700">
+              <div id="headerProgressBar" class="bg-gradient-to-r from-indigo-500 to-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Selector de tema: Auto / Clar / Fosc -->
+          <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span id="themeIcon" class="text-sm select-none" aria-hidden="true">🌓</span>
+            <label for="themeSelector" class="sr-only">Selecciona el tema visual</label>
+            <select id="themeSelector" onchange="setTheme(this.value)" class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden cursor-pointer pr-1">
+              <option value="auto" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Auto</option>
+              <option value="light" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Clar</option>
+              <option value="dark" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Fosc</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Menú de Navegació per Pestanyes -->
+      <nav class="flex items-center gap-2 overflow-x-auto py-2 border-t border-slate-100 dark:border-slate-800">
+        <button data-tab="teoria" class="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all bg-indigo-600 text-white shadow-sm">
+          <span>📚</span> Teoria MySQL & CRUD
+        </button>
+        <button data-tab="esquema" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span>🗄️</span> Esquema de la BBDD
+        </button>
+        <button data-tab="simulador" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
+          <span>💻</span> Simulador d'Activitats (25)
+        </button>
+        <button data-tab="resultats" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 opacity-60" title="Completa o salta totes les 25 activitats per desbloquejar">
+          <span>🔒</span> Resultats & Avaluació
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CONTINGUT PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- VISTA 1: TEORIA MYSQL & CRUD -->
+    <div id="view-teoria" class="view-panel space-y-6">
+      <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-6 sm:p-8 rounded-3xl shadow-sm">
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white inline-block mb-3">Guia Didàctica per a Principiants</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold mb-2">Fonaments de MySQL i Llenguatge SQL</h2>
+        <p class="text-indigo-100 text-sm sm:text-base max-w-3xl leading-relaxed">
+          Benvingut/da al manual teòric! Aquí trobaràs de manera senzilla, visual i pas a pas tot el que necessites saber sobre bases de dades relacionals, la sintaxi de consultes, les operacions CRUD i com relacionar taules.
+        </p>
+      </div>
+
+      <div id="theoryListContainer" class="grid grid-cols-1 gap-6"></div>
+    </div>
+
+    <!-- VISTA 2: ESQUEMA DE LA BASE DE DADES -->
+    <div id="view-esquema" class="view-panel hidden space-y-6">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 rounded-3xl shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 inline-block mb-2">Base de Dades de l'Institut</span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Taules de l'Institut Torre del Palau (Terrassa)</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Explora l'estructura de dades, els noms de columnes i les files que conformen el sistema de gestió del nostre institut.</p>
+          </div>
+          <button onclick="resetDatabase(); showToast('Base de dades restablerta amb dades inicials', 'success'); renderSchemaView();" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1.5">
+            <span>🔄</span> Restablir dades originals
+          </button>
+        </div>
+      </div>
+
+      <div id="schemaTablesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </div>
+
+    <!-- VISTA 3: EL SIMULADOR (ACTIVITATS 1 A 25) -->
+    <div id="view-simulador" class="view-panel hidden space-y-5">
+      
+      <!-- Carrusel / Píndoles de navegació -->
+      <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Directori d'encàrrecs acadèmics</span>
+          <div class="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Assolit</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Saltat</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span> Errada</span>
+          </div>
+        </div>
+        <div id="exercisePillsContainer" class="flex flex-wrap items-center gap-1.5 py-1.5"></div>
+      </div>
+
+      <!-- Targeta de l'Activitat Actual -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Columna Esquerra: Enunciat, Rol i Pistes -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-sky-50/90 dark:bg-slate-900 border border-sky-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+            
+            <div class="flex items-center justify-between gap-2">
+              <span id="exLevelBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                🌱 Nivell Inicial
+              </span>
+              <span id="exNumberText" class="font-mono text-xs font-bold text-sky-700 dark:text-sky-400">
+                Activitat 1 de 25
+              </span>
+            </div>
+
+            <h2 id="exTitleText" class="text-lg font-bold text-slate-900 dark:text-white">
+              Carregant activitat...
+            </h2>
+
+            <div class="bg-white/85 dark:bg-slate-800/80 border-l-4 border-indigo-500 p-3.5 rounded-r-xl shadow-2xs">
+              <div id="exContextText" class="text-xs sm:text-sm text-indigo-950 dark:text-slate-200 leading-relaxed">
+                Carregant context narratiu...
+              </div>
+            </div>
+
+            <div class="bg-white/95 dark:bg-slate-800 border border-sky-200 dark:border-slate-700 p-3.5 rounded-xl shadow-2xs">
+              <span class="text-[11px] uppercase tracking-wider font-bold text-sky-700 dark:text-sky-400 block mb-1">🎯 Què has de fer:</span>
+              <div id="exObjectiveText" class="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+                Carregant objectiu...
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-sky-200/70 dark:border-slate-800">
+              <button onclick="toggleHints()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors flex items-center gap-1.5">
+                <span>💡</span> Pistes d'ajuda
+              </button>
+              <button onclick="toggleSolution()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5">
+                <span>👁️</span> Veure solució
+              </button>
+              <button onclick="switchTab('esquema')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors ml-auto flex items-center gap-1">
+                <span>📋</span> Taules BBDD
+              </button>
+            </div>
+
+            <div id="exHintsBox" class="hidden bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 p-4 rounded-xl space-y-2 transition-all">
+              <span class="text-xs font-bold text-amber-900 dark:text-amber-300 block flex items-center gap-1">
+                <span>💡</span> Pistes per resoldre l'activitat:
+              </span>
+              <div id="exHintsContent"></div>
+            </div>
+
+            <div id="exSolutionBox" class="hidden bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/70 p-4 rounded-xl space-y-2 transition-all">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1">
+                  <span>🔑</span> Solució recomanada:
+                </span>
+                <button onclick="copySolutionToEditor()" class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 hover:underline">
+                  Copiar a l'editor
+                </button>
+              </div>
+              <pre id="exSolutionCode" class="p-3 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-mono text-indigo-950 dark:text-indigo-200 whitespace-pre-wrap select-all"></pre>
+              <p class="text-[11px] text-indigo-700 dark:text-indigo-300">Intenta analitzar cada part de la instrucció abans d'executar-la.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Columna Dreta: Editor SQL i Resultats -->
+        <div class="lg:col-span-7 space-y-4">
+          
+          <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800">SQL</span>
+                <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Escriu la teva consulta a continuació:</span>
+              </div>
+              <button onclick="resetEditor()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex items-center gap-1" title="Restablir editor">
+                <span>↺</span> Restablir
+              </button>
+            </div>
+
+            <div class="relative">
+              <textarea id="sqlEditor" rows="4" spellcheck="false" class="w-full p-4 rounded-xl bg-slate-900 dark:bg-slate-950 text-emerald-300 font-mono text-sm leading-relaxed border border-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-inner resize-y" placeholder="SELECT ... FROM ...;"></textarea>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div class="flex items-center gap-2">
+                <button onclick="runAndValidateExercise()" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95">
+                  <span>⚡</span> Executar i Comprovar
+                </button>
+                <button onclick="skipCurrentExercise()" class="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-colors" title="Avançar si no te'n surts">
+                  Saltar a la següent ↷
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="goToPrevExercise()" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs font-semibold" title="Activitat anterior">
+                  ← Anterior
+                </button>
+                <button onclick="goToNextExercise()" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs font-semibold" title="Activitat següent">
+                  Següent →
+                </button>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 italic">Consell: Pots prémer <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[10px]">Ctrl + Enter</kbd> (o <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[10px]">Cmd + Enter</kbd>) per executar la consulta de pressa.</p>
+          </div>
+
+          <div id="exFeedbackArea" class="hidden"></div>
+
+          <button id="btnNextExercise" onclick="goToNextExercise()" class="hidden w-full py-3 px-4 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center gap-2 transition-all">
+            Següent Activitat ➔
+          </button>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span>📊</span> Resultat de l'execució
+              </span>
+              <span class="text-[11px] text-slate-400">Format tabular de la BBDD</span>
+            </div>
+
+            <div id="exResultTableContainer">
+              <div class="p-8 text-center text-slate-400 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <span class="text-2xl block mb-1">🐬</span>
+                <p class="text-xs">Escriu la teva consulta SQL a l'editor i prem <strong>"Executar i Comprovar"</strong> per veure aquí el resultat de la base de dades.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VISTA 4: RESULTATS I AVALUACIÓ FINAL -->
+    <div id="view-resultats" class="view-panel hidden space-y-6">
+      
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          
+          <div class="md:col-span-8 space-y-3">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 inline-block">
+              Marcador d'Avaluació
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+              Informe de Coordinació de Dades
+            </h2>
+            <div id="resultsSummaryFeedback" class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Calculant resultats...
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 pt-3 no-print">
+              <button onclick="retryFailedExercises()" class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all flex items-center gap-2">
+                <span>🎯</span> Reintentar pendents o errades
+              </button>
+              <button onclick="window.print()" class="px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-2">
+                <span>🖨️</span> Imprimir / Guardar en PDF
+              </button>
+              <button id="btnResetAllProgress" class="px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-colors">
+                Reiniciar tot
+              </button>
+            </div>
+          </div>
+
+          <div class="md:col-span-4 flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Activitats Assolides</span>
+            <span id="resultsSummaryScore" class="text-4xl sm:text-5xl font-black text-indigo-600 dark:text-indigo-400 font-mono my-2">0 / 25</span>
+            <span id="resultsSummaryPercent" class="text-sm font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-3 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">0%</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white px-1">Detall d'activitats i correcció d'errades</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 px-1 mb-2">Revisa a sota quines consultes vas executar a cada activitat, quina ha estat l'errada i quina és la solució esperada.</p>
+        
+        <div id="resultsDetailsContainer" class="space-y-4"></div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- PEU DE PÀGINA -->
+ <!-- PEU DE PÀGINA -->
+  <footer class="portal-footer w-full">
+    <div class="footer-content">
+      
+      <!-- Part esquerra: Departament i Institut -->
+      <div class="footer-left">
+        <span class="footer-logo">&lt;/&gt; Dept. de Tecnologies</span>
+        <span class="footer-sub">Institut Torre del Palau · Terrassa</span>
+      </div>
+
+      <!-- Part dreta: Autoria i Llicència CC BY-NC-SA -->
+      <div class="footer-right">
+        <a 
+          href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="cc-badge"
+          title="Llicència Creative Commons BY-NC-SA 4.0"
+        >
+          <svg width="88" height="31" viewBox="0 0 88 31" xmlns="http://www.w3.org/2000/svg">
+            <rect width="88" height="31" rx="4" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+            <circle cx="15" cy="15.5" r="9.5" fill="none" stroke="#f8fafc" stroke-width="1.8"/>
+            <text x="15" y="18.5" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-weight="bold" font-size="8.5">CC</text>
+            <text x="54" y="13.5" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-weight="bold" font-size="8.5">BY · NC · SA</text>
+            <text x="54" y="23.5" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="7">4.0 Internacional</text>
+          </svg>
+        </a>
+
+        <div class="license-text">
+          <div>
+            Portal creat per <strong>J.Dalmau</strong> amb assistència de la IA
+          </div>
+          <div>
+            Codi: <a href="/license/">AGPLv3</a> · Continguts: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> · © <span id="footerYear"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+  <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+
+  <!-- Scripts de l'Aplicació -->
+  <script>
+// Gestió del selector de tema (Auto / Clar / Fosc)
+function applyTheme(mode) {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = mode === 'dark' || (mode === 'auto' && prefersDark);
+  document.documentElement.classList.toggle('dark', isDark);
+
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    if (mode === 'light') icon.textContent = '☀️';
+    else if (mode === 'dark') icon.textContent = '🌙';
+    else icon.textContent = '🌓';
+  }
+}
+
+function setTheme(mode) {
+  localStorage.setItem('edudata_theme', mode);
+  applyTheme(mode);
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  const saved = localStorage.getItem('edudata_theme') || 'auto';
+  if (saved === 'auto') applyTheme('auto');
+});
+
+// Esquema, dades inicials i motor SQL integrat
+const INITIAL_SCHEMA = {
+  alumnes: [
+    { id: 1, nom: "Marc", cognoms: "Serra Puig", email: "marc.serra@gmail.com", edat: 19, ciutat: "Barcelona", telefon: "611223344", actiu: 1 },
+    { id: 2, nom: "Laia", cognoms: "Vidal Soler", email: "laia.vidal@outlook.com", edat: 22, ciutat: "Girona", telefon: "622334455", actiu: 1 },
+    { id: 3, nom: "Pau", cognoms: "Rovira Font", email: "pau.rovira@gmail.com", edat: 17, ciutat: "Tarragona", telefon: "633445566", actiu: 1 },
+    { id: 4, nom: "Mireia", cognoms: "Costa Bosch", email: "m.costa@yahoo.es", edat: 24, ciutat: "Barcelona", telefon: "644556677", actiu: 0 },
+    { id: 5, nom: "Arnau", cognoms: "Mas Vila", email: "arnau.mas@gmail.com", edat: 16, ciutat: "Lleida", telefon: "655667788", actiu: 1 },
+    { id: 6, nom: "Júlia", cognoms: "Martí Roca", email: "julia.marti@hotmail.com", edat: 20, ciutat: "Girona", telefon: "666778899", actiu: 1 },
+    { id: 7, nom: "Pol", cognoms: "Ferrer Gomez", email: "pol.ferrer@gmail.com", edat: 18, ciutat: "Barcelona", telefon: "677889900", actiu: 1 },
+    { id: 8, nom: "Berta", cognoms: "Pons Casas", email: "berta.pons@gmail.com", edat: 26, ciutat: "Sabadell", telefon: "688990011", actiu: 0 },
+    { id: 9, nom: "Oriol", cognoms: "Vila Torres", email: "oriol.vila@icloud.com", edat: 17, ciutat: "Terrassa", telefon: "699001122", actiu: 1 },
+    { id: 10, nom: "Clara", cognoms: "Soler Pujol", email: "clara.soler@gmail.com", edat: 21, ciutat: "Barcelona", telefon: "610112233", actiu: 1 },
+    { id: 11, nom: "David", cognoms: "López Blanch", email: "david.lb@yahoo.es", edat: 28, ciutat: "Mataró", telefon: "621223344", actiu: 1 },
+    { id: 12, nom: "Emma", cognoms: "Roca Dalmau", email: "emma.roca@gmail.com", edat: 19, ciutat: "Girona", telefon: "632334455", actiu: 1 }
+  ],
+  cursos: [
+    { id: 1, nom_curs: "Bases de Dades MySQL", departament: "Informàtica", hores: 60, preu: 150.00, places_max: 25 },
+    { id: 2, nom_curs: "Programació en Python", departament: "Informàtica", hores: 90, preu: 220.00, places_max: 20 },
+    { id: 3, nom_curs: "Desenvolupament Web Frontend", departament: "Disseny", hores: 80, preu: 190.00, places_max: 20 },
+    { id: 4, nom_curs: "Anglès B2 Professional", departament: "Idiomes", hores: 50, preu: 95.00, places_max: 15 },
+    { id: 5, nom_curs: "Comptabilitat i Finances", departament: "Empresa", hores: 40, preu: 85.00, places_max: 30 },
+    { id: 6, nom_curs: "Robòtica i Intel·ligència Artificial", departament: "Informàtica", hores: 100, preu: 290.00, places_max: 15 },
+    { id: 7, nom_curs: "Alemany Inicial A1", departament: "Idiomes", hores: 45, preu: 90.00, places_max: 12 }
+  ],
+  professors: [
+    { id: 1, nom: "Joan", cognoms: "Batlle Ortiz", departament: "Informàtica", sou: 2400.00, email: "jbatlle@novacampus.cat" },
+    { id: 2, nom: "Marta", cognoms: "Castelló Prat", departament: "Idiomes", sou: 2150.00, email: "mcastello@novacampus.cat" },
+    { id: 3, nom: "Sergi", cognoms: "Miralles Grau", departament: "Informàtica", sou: 2600.00, email: "smiralles@novacampus.cat" },
+    { id: 4, nom: "Helena", cognoms: "Navarro Camps", departament: "Disseny", sou: 2200.00, email: "hnavarro@novacampus.cat" },
+    { id: 5, nom: "Carles", cognoms: "Ribas Vall", departament: "Empresa", sou: 2300.00, email: "cribas@novacampus.cat" }
+  ],
+  matricules: [
+    { id: 1, alumne_id: 1, curs_id: 1, data_matricula: "2024-09-10", nota_final: 8.5, pagat: 1 },
+    { id: 2, alumne_id: 1, curs_id: 2, data_matricula: "2024-09-12", nota_final: 7.0, pagat: 1 },
+    { id: 3, alumne_id: 2, curs_id: 1, data_matricula: "2024-09-11", nota_final: 9.2, pagat: 1 },
+    { id: 4, alumne_id: 2, curs_id: 3, data_matricula: "2024-09-15", nota_final: 8.0, pagat: 1 },
+    { id: 5, alumne_id: 3, curs_id: 4, data_matricula: "2024-09-16", nota_final: 4.5, pagat: 0 },
+    { id: 6, alumne_id: 4, curs_id: 5, data_matricula: "2024-09-18", nota_final: 6.0, pagat: 1 },
+    { id: 7, alumne_id: 5, curs_id: 1, data_matricula: "2024-09-20", nota_final: 5.5, pagat: 1 },
+    { id: 8, alumne_id: 6, curs_id: 2, data_matricula: "2024-09-21", nota_final: 9.8, pagat: 1 },
+    { id: 9, alumne_id: 7, curs_id: 4, data_matricula: "2024-09-22", nota_final: 7.2, pagat: 1 },
+    { id: 10, alumne_id: 8, curs_id: 5, data_matricula: "2024-09-25", nota_final: 3.8, pagat: 0 },
+    { id: 11, alumne_id: 9, curs_id: 1, data_matricula: "2024-09-26", nota_final: 8.0, pagat: 1 },
+    { id: 12, alumne_id: 10, curs_id: 3, data_matricula: "2024-09-28", nota_final: 7.5, pagat: 1 },
+    { id: 13, alumne_id: 11, curs_id: 2, data_matricula: "2024-10-01", nota_final: 6.8, pagat: 1 },
+    { id: 14, alumne_id: 12, curs_id: 1, data_matricula: "2024-10-02", nota_final: 9.0, pagat: 1 },
+    { id: 15, alumne_id: 12, curs_id: 6, data_matricula: "2024-10-05", nota_final: 8.8, pagat: 1 }
+  ]
+};
+
+const MiniSQL = {
+  tables: {},
+  reset() {
+    this.tables = JSON.parse(JSON.stringify(INITIAL_SCHEMA));
+  },
+  exec(rawSql) {
+    let sql = rawSql.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "").trim();
+    if (sql.endsWith(";")) sql = sql.slice(0, -1).trim();
+    if (!sql) throw new Error("La consulta SQL està buida.");
+    const upper = sql.toUpperCase();
+    if (upper.startsWith("SELECT")) return this._execSelect(sql);
+    if (upper.startsWith("INSERT")) return this._execInsert(sql);
+    if (upper.startsWith("UPDATE")) return this._execUpdate(sql);
+    if (upper.startsWith("DELETE")) return this._execDelete(sql);
+    throw new Error("Instrucció SQL no reconeguda. Utilitza SELECT, INSERT, UPDATE o DELETE.");
+  },
+  _splitTopLevel(str, sepRegex) {
+    const parts = [];
+    let current = "", depth = 0, inQuote = null;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (inQuote) {
+        current += ch;
+        if (ch === inQuote && str[i - 1] !== "\\") inQuote = null;
+      } else if (ch === "'" || ch === '"') {
+        inQuote = ch;
+        current += ch;
+      } else if (ch === "(") {
+        depth++; current += ch;
+      } else if (ch === ")") {
+        depth--; current += ch;
+      } else if (depth === 0 && sepRegex && str.slice(i).match(sepRegex)) {
+        const m = str.slice(i).match(sepRegex);
+        if (m.index === 0) {
+          parts.push(current.trim());
+          current = "";
+          i += m[0].length - 1;
+          continue;
+        }
+        current += ch;
+      } else {
+        current += ch;
+      }
+    }
+    if (current.trim()) parts.push(current.trim());
+    return parts;
+  },
+  _parseLiteral(valStr) {
+    const s = valStr.trim();
+    if ((s.startsWith("'") && s.endsWith("'")) || (s.startsWith('"') && s.endsWith('"'))) return s.slice(1, -1);
+    if (s.toUpperCase() === "NULL") return null;
+    if (!isNaN(s) && s !== "") return Number(s);
+    return s;
+  },
+  _getVal(row, expr) {
+    const clean = expr.trim().replace(/`/g, "");
+    if (clean in row) return row[clean];
+    const dotIdx = clean.indexOf(".");
+    if (dotIdx !== -1) {
+      if (clean in row) return row[clean];
+      const col = clean.slice(dotIdx + 1);
+      if (col in row) return row[col];
+    }
+    const lower = clean.toLowerCase();
+    for (const k of Object.keys(row)) {
+      if (k.toLowerCase() === lower) return row[k];
+    }
+    return undefined;
+  },
+  _evalExpr(row, expr) {
+    const clean = expr.trim();
+    if (clean.startsWith("(") && clean.endsWith(")")) {
+      const inner = clean.slice(1, -1).trim();
+      if (inner.toUpperCase().startsWith("SELECT")) {
+        const res = this._execSelect(inner);
+        if (res.length === 0) return null;
+        return res[0][Object.keys(res[0])[0]];
+      }
+    }
+    const arithMatch = clean.match(/^([a-zA-Z0-9_.`]+)\s*([+\-*/])\s*([0-9.]+)$/);
+    if (arithMatch) {
+      const left = Number(this._getVal(row, arithMatch[1]));
+      const op = arithMatch[2];
+      const right = Number(arithMatch[3]);
+      if (op === "*") return Math.round(left * right * 10000) / 10000;
+      if (op === "/") return left / right;
+      if (op === "+") return left + right;
+      if (op === "-") return left - right;
+    }
+    if ((clean.startsWith("'") && clean.endsWith("'")) || (clean.startsWith('"') && clean.endsWith('"'))) return clean.slice(1, -1);
+    if (!isNaN(clean) && clean !== "") return Number(clean);
+    if (clean.toUpperCase() === "NULL") return null;
+    const val = this._getVal(row, clean);
+    if (val === undefined) throw new Error(`Columna desconeguda: '${clean}'`);
+    return val;
+  },
+  _evalWhere(row, whereStr) {
+    if (!whereStr) return true;
+    const orParts = this._splitTopLevel(whereStr, /^\s+OR\s+/i);
+    if (orParts.length > 1) return orParts.some((p) => this._evalWhere(row, p));
+    const andParts = [];
+    let remaining = whereStr.trim();
+    while (remaining.length > 0) {
+      const betweenMatch = remaining.match(/^(.+?\s+BETWEEN\s+[^\s]+\s+AND\s+[^\s]+)(?:\s+AND\s+([\s\S]+))?$/i);
+      if (betweenMatch) {
+        andParts.push(betweenMatch[1].trim());
+        remaining = betweenMatch[2] ? betweenMatch[2].trim() : "";
+        continue;
+      }
+      const parts = this._splitTopLevel(remaining, /^\s+AND\s+/i);
+      if (parts.length > 1) {
+        andParts.push(parts[0]);
+        remaining = parts.slice(1).join(" AND ");
+      } else {
+        andParts.push(remaining);
+        remaining = "";
+      }
+    }
+    if (andParts.length > 1) return andParts.every((p) => this._evalWhere(row, p));
+    let cond = whereStr.trim();
+    if (cond.startsWith("(") && cond.endsWith(")")) cond = cond.slice(1, -1).trim();
+
+    let m = cond.match(/^([a-zA-Z0-9_.`]+)\s+IS\s+NOT\s+NULL$/i);
+    if (m) return this._evalExpr(row, m[1]) !== null && this._evalExpr(row, m[1]) !== undefined;
+
+    m = cond.match(/^([a-zA-Z0-9_.`]+)\s+IS\s+NULL$/i);
+    if (m) {
+      const v = this._getVal(row, m[1]);
+      return v === null || v === undefined;
+    }
+
+    m = cond.match(/^([a-zA-Z0-9_.`]+)\s+BETWEEN\s+(.+?)\s+AND\s+(.+)$/i);
+    if (m) {
+      const v = this._evalExpr(row, m[1]);
+      return v >= this._parseLiteral(m[2]) && v <= this._parseLiteral(m[3]);
+    }
+
+    m = cond.match(/^([a-zA-Z0-9_.`]+)\s+IN\s*\((.+)\)$/i);
+    if (m) {
+      const v = this._evalExpr(row, m[1]);
+      return this._splitTopLevel(m[2], /^,/).map((x) => this._parseLiteral(x)).includes(v);
+    }
+
+    m = cond.match(/^([a-zA-Z0-9_.`]+)\s+LIKE\s+(.+)$/i);
+    if (m) {
+      const v = String(this._evalExpr(row, m[1]) ?? "");
+      const pattern = String(this._parseLiteral(m[2]));
+      const regexStr = "^" + pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".") + "$";
+      return new RegExp(regexStr, "i").test(v);
+    }
+
+    m = cond.match(/^(.+?)\s*(>=|<=|!=|<>|=|>|<)\s*(.+)$/);
+    if (m) {
+      const left = this._evalExpr(row, m[1]);
+      const op = m[2];
+      const right = this._evalExpr(row, m[3]);
+      if (op === "=") return left == right;
+      if (op === "!=" || op === "<>") return left != right;
+      if (op === ">") return left > right;
+      if (op === "<") return left < right;
+      if (op === ">=") return left >= right;
+      if (op === "<=") return left <= right;
+    }
+    throw new Error(`No s'ha pogut interpretar la condició WHERE: '${cond}'`);
+  },
+  _isAggregate(expr) {
+    return /^(COUNT|AVG|SUM|MIN|MAX)\s*\(/i.test(expr.trim());
+  },
+  _evalAggregate(groupRows, expr) {
+    const m = expr.trim().match(/^(COUNT|AVG|SUM|MIN|MAX)\s*\((.+)\)$/i);
+    if (!m) throw new Error(`Funció d'agregació no vàlida: ${expr}`);
+    const fn = m[1].toUpperCase();
+    const arg = m[2].trim();
+    if (fn === "COUNT") {
+      if (arg === "*") return groupRows.length;
+      return groupRows.filter((r) => this._getVal(r, arg) !== null && this._getVal(r, arg) !== undefined).length;
+    }
+    const vals = groupRows.map((r) => this._getVal(r, arg)).filter((v) => v !== null && v !== undefined && !isNaN(Number(v))).map(Number);
+    if (vals.length === 0) return null;
+    if (fn === "SUM") return vals.reduce((a, b) => a + b, 0);
+    if (fn === "AVG") return vals.reduce((a, b) => a + b, 0) / vals.length;
+    if (fn === "MIN") return Math.min(...vals);
+    if (fn === "MAX") return Math.max(...vals);
+    return null;
+  },
+  _execSelect(sql) {
+    const regex = /^SELECT\s+(DISTINCT\s+)?([\s\S]+?)\s+FROM\s+([a-zA-Z0-9_`]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?([\s\S]*)$/i;
+    const match = sql.match(regex);
+    if (!match) throw new Error("Sintaxi SELECT incorrecta. Exemple: SELECT * FROM alumnes;");
+
+    const isDistinct = Boolean(match[1]);
+    const selectPart = match[2].trim();
+    const baseTableName = match[3].replace(/`/g, "");
+    const baseAlias = match[4] && !/^(INNER|LEFT|RIGHT|JOIN|WHERE|GROUP|HAVING|ORDER|LIMIT)$/i.test(match[4]) ? match[4] : baseTableName;
+    let rest = ((match[4] && baseAlias === baseTableName ? match[4] + " " : "") + (match[5] || "")).trim();
+
+    if (!this.tables[baseTableName]) throw new Error(`La taula '${baseTableName}' no existeix a la base de dades.`);
+
+    let rows = this.tables[baseTableName].map((r) => {
+      const obj = {};
+      for (const [k, v] of Object.entries(r)) {
+        obj[`${baseAlias}.${k}`] = v;
+        obj[k] = v;
+      }
+      return obj;
+    });
+
+    const joinRegex = /^(INNER\s+JOIN|LEFT\s+JOIN|JOIN)\s+([a-zA-Z0-9_`]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?\s+ON\s+([a-zA-Z0-9_.`]+)\s*=\s*([a-zA-Z0-9_.`]+)\s*/i;
+    while (true) {
+      const jm = rest.match(joinRegex);
+      if (!jm) break;
+      const joinType = jm[1].toUpperCase();
+      const joinTable = jm[2].replace(/`/g, "");
+      const joinAlias = jm[3] && !/^(INNER|LEFT|JOIN|WHERE|GROUP|HAVING|ORDER|LIMIT)$/i.test(jm[3]) ? jm[3] : joinTable;
+      const onLeft = jm[4].replace(/`/g, "");
+      const onRight = jm[5].replace(/`/g, "");
+      if (!this.tables[joinTable]) throw new Error(`La taula '${joinTable}' indicada al JOIN no existeix.`);
+
+      const rightRows = this.tables[joinTable];
+      const rightCols = rightRows.length > 0 ? Object.keys(rightRows[0]) : [];
+      const newRows = [];
+
+      for (const lRow of rows) {
+        let matched = false;
+        for (const rRow of rightRows) {
+          const rQual = {};
+          for (const [k, v] of Object.entries(rRow)) rQual[`${joinAlias}.${k}`] = v;
+          const combined = { ...lRow, ...rQual };
+          const lv = this._getVal(combined, onLeft);
+          const rv = this._getVal(combined, onRight);
+          if (lv !== undefined && rv !== undefined && lv == rv) {
+            for (const [k, v] of Object.entries(rRow)) {
+              if (!(k in combined)) combined[k] = v;
+            }
+            newRows.push(combined);
+            matched = true;
+          }
+        }
+        if (!matched && joinType.includes("LEFT")) {
+          const combined = { ...lRow };
+          for (const k of rightCols) {
+            combined[`${joinAlias}.${k}`] = null;
+            if (!(k in combined)) combined[k] = null;
+          }
+          newRows.push(combined);
+        }
+      }
+      rows = newRows;
+      rest = rest.slice(jm[0].length).trim();
+    }
+
+    let whereClause = null, groupByClause = null, havingClause = null, orderByClause = null, limitCount = null;
+    const limitMatch = rest.match(/\s*LIMIT\s+(\d+)\s*$/i);
+    if (limitMatch) { limitCount = parseInt(limitMatch[1], 10); rest = rest.slice(0, limitMatch.index).trim(); }
+    const orderMatch = rest.match(/\s*ORDER\s+BY\s+([\s\S]+)$/i);
+    if (orderMatch) { orderByClause = orderMatch[1].trim(); rest = rest.slice(0, orderMatch.index).trim(); }
+    const havingMatch = rest.match(/\s*HAVING\s+([\s\S]+)$/i);
+    if (havingMatch) { havingClause = havingMatch[1].trim(); rest = rest.slice(0, havingMatch.index).trim(); }
+    const groupMatch = rest.match(/\s*GROUP\s+BY\s+([\s\S]+)$/i);
+    if (groupMatch) { groupByClause = groupMatch[1].trim(); rest = rest.slice(0, groupMatch.index).trim(); }
+    const whereMatch = rest.match(/^WHERE\s+([\s\S]+)$/i);
+    if (whereMatch) { whereClause = whereMatch[1].trim(); rest = ""; }
+    if (rest.length > 0) throw new Error(`Clàusula o sintaxi inesperada prop de: '${rest}'`);
+
+    if (whereClause) rows = rows.filter((r) => this._evalWhere(r, whereClause));
+
+    const selectFields = this._splitTopLevel(selectPart, /^,/).map((f) => {
+      const asMatch = f.match(/^([\s\S]+?)\s+AS\s+([a-zA-Z0-9_`]+)$/i);
+      if (asMatch) return { expr: asMatch[1].trim(), alias: asMatch[2].replace(/`/g, "").trim() };
+      const clean = f.trim();
+      const dot = clean.indexOf(".");
+      const defaultName = dot !== -1 && !clean.includes("(") ? clean.slice(dot + 1).replace(/`/g, "") : clean.replace(/`/g, "");
+      return { expr: clean, alias: defaultName };
+    });
+
+    const hasAggregates = selectFields.some((f) => this._isAggregate(f.expr));
+    let resultRows = [];
+
+    if (groupByClause || hasAggregates) {
+      const groups = new Map();
+      if (groupByClause) {
+        const groupCols = groupByClause.split(",").map((c) => c.trim());
+        for (const r of rows) {
+          const key = JSON.stringify(groupCols.map((c) => this._getVal(r, c)));
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(r);
+        }
+      } else {
+        groups.set("ALL", rows);
+      }
+
+      for (const [, grpRows] of groups.entries()) {
+        if (havingClause) {
+          const hm = havingClause.match(/^(.+?)\s*(>=|<=|!=|<>|=|>|<)\s*(.+)$/);
+          if (hm) {
+            const leftVal = this._isAggregate(hm[1]) ? this._evalAggregate(grpRows, hm[1]) : this._evalExpr(grpRows[0], hm[1]);
+            const rightVal = this._parseLiteral(hm[3]);
+            const op = hm[2];
+            let pass = false;
+            if (op === ">") pass = leftVal > rightVal;
+            else if (op === "<") pass = leftVal < rightVal;
+            else if (op === ">=") pass = leftVal >= rightVal;
+            else if (op === "<=") pass = leftVal <= rightVal;
+            else if (op === "=") pass = leftVal == rightVal;
+            else if (op === "!=" || op === "<>") pass = leftVal != rightVal;
+            if (!pass) continue;
+          }
+        }
+        const outRow = {};
+        for (const f of selectFields) {
+          if (this._isAggregate(f.expr)) outRow[f.alias] = this._evalAggregate(grpRows, f.expr);
+          else if (grpRows.length > 0) outRow[f.alias] = this._evalExpr(grpRows[0], f.expr);
+          else outRow[f.alias] = null;
+        }
+        resultRows.push(outRow);
+      }
+    } else {
+      if (selectPart === "*") {
+        const baseCols = Object.keys(this.tables[baseTableName][0] || {});
+        resultRows = rows.map((r) => {
+          const out = {};
+          for (const c of baseCols) out[c] = r[`${baseAlias}.${c}`] !== undefined ? r[`${baseAlias}.${c}`] : r[c];
+          return out;
+        });
+      } else {
+        resultRows = rows.map((r) => {
+          const out = {};
+          for (const f of selectFields) out[f.alias] = this._evalExpr(r, f.expr);
+          return out;
+        });
+      }
+    }
+
+    if (isDistinct) {
+      const seen = new Set();
+      resultRows = resultRows.filter((r) => {
+        const key = JSON.stringify(r);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    if (orderByClause) {
+      const orderCols = orderByClause.split(",").map((part) => {
+        const p = part.trim().split(/\s+/);
+        return { col: p[0].replace(/`/g, ""), dir: p[1] && p[1].toUpperCase() === "DESC" ? -1 : 1 };
+      });
+      resultRows.sort((a, b) => {
+        for (const { col, dir } of orderCols) {
+          const va = this._getVal(a, col), vb = this._getVal(b, col);
+          if (va < vb) return -1 * dir;
+          if (va > vb) return 1 * dir;
+        }
+        return 0;
+      });
+    }
+
+    if (limitCount !== null) resultRows = resultRows.slice(0, limitCount);
+    return resultRows;
+  },
+  _execInsert(sql) {
+    const m = sql.match(/^INSERT\s+INTO\s+([a-zA-Z0-9_`]+)\s*(?:\(([^)]+)\))?\s*VALUES\s*\(([\s\S]+)\)$/i);
+    if (!m) throw new Error("Sintaxi INSERT incorrecta. Exemple: INSERT INTO alumnes (col1, col2) VALUES (val1, val2);");
+    const tableName = m[1].replace(/`/g, "");
+    if (!this.tables[tableName]) throw new Error(`La taula '${tableName}' no existeix.`);
+    const cols = m[2] ? m[2].split(",").map((c) => c.replace(/`/g, "").trim()) : Object.keys(this.tables[tableName][0] || {});
+    const vals = this._splitTopLevel(m[3], /^,/).map((v) => this._parseLiteral(v));
+    if (cols.length !== vals.length) throw new Error(`El nombre de columnes (${cols.length}) no coincideix amb el nombre de valors (${vals.length}).`);
+    const newRow = {};
+    cols.forEach((c, i) => { newRow[c] = vals[i]; });
+    this.tables[tableName].push(newRow);
+    return [];
+  },
+  _execUpdate(sql) {
+    const m = sql.match(/^UPDATE\s+([a-zA-Z0-9_`]+)\s+SET\s+([\s\S]+?)(?:\s+WHERE\s+([\s\S]+))?$/i);
+    if (!m) throw new Error("Sintaxi UPDATE incorrecta. Exemple: UPDATE alumnes SET telefon = '600...' WHERE id = 1;");
+    const tableName = m[1].replace(/`/g, "");
+    if (!this.tables[tableName]) throw new Error(`La taula '${tableName}' no existeix.`);
+    const assignments = this._splitTopLevel(m[2], /^,/).map((a) => {
+      const eq = a.indexOf("=");
+      if (eq === -1) throw new Error(`Assignació SET no vàlida: ${a}`);
+      return { col: a.slice(0, eq).replace(/`/g, "").trim(), val: this._parseLiteral(a.slice(eq + 1)) };
+    });
+    const whereClause = m[3] ? m[3].trim() : null;
+    for (const row of this.tables[tableName]) {
+      if (!whereClause || this._evalWhere(row, whereClause)) {
+        for (const { col, val } of assignments) row[col] = val;
+      }
+    }
+    return [];
+  },
+  _execDelete(sql) {
+    const m = sql.match(/^DELETE\s+FROM\s+([a-zA-Z0-9_`]+)(?:\s+WHERE\s+([\s\S]+))?$/i);
+    if (!m) throw new Error("Sintaxi DELETE incorrecta. Exemple: DELETE FROM matricules WHERE id = 10;");
+    const tableName = m[1].replace(/`/g, "");
+    if (!this.tables[tableName]) throw new Error(`La taula '${tableName}' no existeix.`);
+    const whereClause = m[2] ? m[2].trim() : null;
+    if (!whereClause) this.tables[tableName] = [];
+    else this.tables[tableName] = this.tables[tableName].filter((row) => !this._evalWhere(row, whereClause));
+    return [];
+  }
+};
+
+function resetDatabase() {
+  MiniSQL.reset();
+}
+
+function runSQL(sql) {
+  return MiniSQL.exec(sql);
+}
+
+const THEORY_MODULES = [
+  {
+    id: "intro-bbdd",
+    tag: "Conceptes Clau",
+    titol: "1. Què és una Base de Dades i MySQL?",
+    resum: "Descobreix com s'organitza la informació en taules, files i columnes.",
+    contingut: `
+      <div class="space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>Una <strong>Base de Dades Relacional (RDBMS)</strong> és un magatzem digital que ens permet guardar grans quantitats d'informació de manera ordenada, segura i connectada entre si.</p>
+        <div class="bg-indigo-50 dark:bg-indigo-950/60 border-l-4 border-indigo-400 p-4 rounded-r-xl">
+          <h4 class="font-bold text-indigo-900 dark:text-indigo-200 mb-1">🐬 Què és MySQL?</h4>
+          <p class="text-indigo-800 dark:text-indigo-300 text-sm">MySQL és el sistema gestor de bases de dades relacional més popular del món. Utilitza el llenguatge <strong>SQL</strong> (<em>Structured Query Language</em>) per crear, consultar i manipular dades.</p>
+        </div>
+        <h4 class="font-bold text-slate-800 dark:text-white text-lg pt-2">L'analogia del Full de Càlcul</h4>
+        <p>Pensa en una base de dades com un conjunt de fulls d'Excel interconnectats:</p>
+        <ul class="list-disc pl-5 space-y-2">
+          <li><strong>Taula (Table):</strong> És com un full d'Excel (per exemple, la taula <code>alumnes</code> o la taula <code>cursos</code>).</li>
+          <li><strong>Columna o Camp (Field / Column):</strong> Cada característica que guardem (ex: <code>nom</code>, <code>email</code>, <code>edat</code>). Té un tipus de dades fix (text, número, data...).</li>
+          <li><strong>Fila o Registre (Row / Record):</strong> Cada element individual guardat (ex: les dades d'un alumne en concret: <em>Marc Serra, 19 anys, Barcelona</em>).</li>
+        </ul>
+        <h4 class="font-bold text-slate-800 dark:text-white text-lg pt-2">🔑 Claus Primàries (Primary Key) i Foranes (Foreign Key)</h4>
+        <p>Per identificar cada fila de manera única sense confusions (com el DNI d'una persona), utilitzem una <strong>Clau Primària (Primary Key / PK)</strong>, normalment anomenada <code>id</code>.</p>
+        <p>Quan volem relacionar una taula amb una altra (per exemple, saber quin alumne ha comprat quin curs), guardem l'ID de l'alumne a la taula de matrícules. Això s'anomena <strong>Clau Forana (Foreign Key / FK)</strong>.</p>
+      </div>
+    `
+  },
+  {
+    id: "crud",
+    tag: "Fonamental",
+    titol: "2. Què és el CRUD en Bases de Dades?",
+    resum: "Les 4 operacions essencials que tot informàtic o gestor de dades ha de dominar.",
+    contingut: `
+      <div class="space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>En el món del desenvolupament i la gestió de dades, l'acrònim <strong>CRUD</strong> defineix les quatre operacions bàsiques que es poden fer sobre qualsevol sistema d'emmagatzematge:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-3">
+          <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl">
+            <span class="inline-block bg-emerald-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">C - CREATE</span>
+            <h5 class="font-bold text-emerald-950 dark:text-emerald-200">INSERT INTO</h5>
+            <p class="text-sm text-emerald-800 dark:text-emerald-300 mt-1">Serveix per afegir nous registres a una taula.</p>
+            <code class="block mt-2 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-300 p-2 rounded text-xs border border-emerald-100 dark:border-emerald-800 font-mono">INSERT INTO alumnes (nom, edat) VALUES ('Pau', 18);</code>
+          </div>
+          <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-4 rounded-xl">
+            <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">R - READ</span>
+            <h5 class="font-bold text-blue-950 dark:text-blue-200">SELECT</h5>
+            <p class="text-sm text-blue-800 dark:text-blue-300 mt-1">Llegeix i consulta dades existents a les taules.</p>
+            <code class="block mt-2 bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-300 p-2 rounded text-xs border border-blue-100 dark:border-blue-800 font-mono">SELECT nom, email FROM alumnes;</code>
+          </div>
+          <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-4 rounded-xl">
+            <span class="inline-block bg-amber-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">U - UPDATE</span>
+            <h5 class="font-bold text-amber-950 dark:text-amber-200">UPDATE ... SET</h5>
+            <p class="text-sm text-amber-800 dark:text-amber-300 mt-1">Modifica o actualitza dades que ja estan guardades.</p>
+            <code class="block mt-2 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-300 p-2 rounded text-xs border border-amber-100 dark:border-amber-800 font-mono">UPDATE alumnes SET edat = 20 WHERE id = 1;</code>
+          </div>
+          <div class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-4 rounded-xl">
+            <span class="inline-block bg-rose-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">D - DELETE</span>
+            <h5 class="font-bold text-rose-950 dark:text-rose-200">DELETE FROM</h5>
+            <p class="text-sm text-rose-800 dark:text-rose-300 mt-1">Elimina registres existents de la taula.</p>
+            <code class="block mt-2 bg-white dark:bg-slate-900 text-rose-900 dark:text-rose-300 p-2 rounded text-xs border border-rose-100 dark:border-rose-800 font-mono">DELETE FROM alumnes WHERE id = 5;</code>
+          </div>
+        </div>
+        <div class="bg-amber-100/70 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 p-3 rounded-xl flex items-start space-x-3 text-amber-900 dark:text-amber-200 text-sm">
+          <span class="text-xl">⚠️</span>
+          <p><strong>Atenció d'or en SQL:</strong> Quan facis un <code>UPDATE</code> o un <code>DELETE</code>, no oblidis MAI la clàusula <code>WHERE</code>! Si no la poses, modificaràs o esborraràs <em>tots</em> els registres de la taula!</p>
+        </div>
+      </div>
+    `
+  },
+  {
+    id: "consultes-select",
+    tag: "Consultes",
+    titol: "3. Consultes i Filtratge (SELECT & WHERE)",
+    resum: "Com seleccionar columnes, aplicar filtres, ordenar i limitar el nombre de resultats.",
+    contingut: `
+      <div class="space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed">
+        <h4 class="font-bold text-slate-800 dark:text-white text-base">La instrucció SELECT</h4>
+        <p>L'ordre <code>SELECT</code> és la més utilitzada de tot SQL. Indica quines columnes volem extreure d'una taula especificada amb <code>FROM</code>.</p>
+        <div class="space-y-2">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Totes les columnes (asterisc *):</p>
+            <pre class="font-mono text-xs text-indigo-700 dark:text-indigo-300 mt-1">SELECT * FROM cursos;</pre>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Columnes concretes separades per coma:</p>
+            <pre class="font-mono text-xs text-indigo-700 dark:text-indigo-300 mt-1">SELECT nom_curs, preu FROM cursos;</pre>
+          </div>
+        </div>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-2">Filtrar dades amb WHERE</h4>
+        <p>La clàusula <code>WHERE</code> ens permet seleccionar només les files que compleixen una condició:</p>
+        <ul class="list-disc pl-5 space-y-1 text-sm">
+          <li><code>WHERE edat = 18</code> (Exactament 18 anys)</li>
+          <li><code>WHERE preu > 100</code> (Preu més gran de 100€)</li>
+          <li><code>WHERE ciutat != 'Barcelona'</code> (Ciutat diferent de Barcelona)</li>
+          <li><code>WHERE edat >= 18 AND ciutat = 'Girona'</code> (Totes dues certes)</li>
+          <li><code>WHERE ciutat = 'Lleida' OR ciutat = 'Tarragona'</code> (Una o l'altra)</li>
+        </ul>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-2">Filtres avançats molt útils</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <div class="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-1">LIKE '%text%'</strong>
+            <p class="text-xs text-slate-600 dark:text-slate-300">Cerca patrons de text. El símbol <code>%</code> vol dir 'qualsevol caràcter'.</p>
+            <code class="text-[11px] text-slate-800 dark:text-slate-200 block mt-1">WHERE email LIKE '%@gmail.com'</code>
+          </div>
+          <div class="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-1">BETWEEN x AND y</strong>
+            <p class="text-xs text-slate-600 dark:text-slate-300">Filtra valors que estiguin compresos en un rang inclusiu.</p>
+            <code class="text-[11px] text-slate-800 dark:text-slate-200 block mt-1">WHERE preu BETWEEN 50 AND 150</code>
+          </div>
+          <div class="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+            <strong class="text-indigo-600 dark:text-indigo-400 block mb-1">IN ('a', 'b', 'c')</strong>
+            <p class="text-xs text-slate-600 dark:text-slate-300">Comprova si el valor està dins d'una llista definida.</p>
+            <code class="text-[11px] text-slate-800 dark:text-slate-200 block mt-1">WHERE ciutat IN ('Girona', 'Lleida')</code>
+          </div>
+        </div>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-2">Ordenar i Limitar resultats</h4>
+        <p class="text-sm">Amb <code>ORDER BY columna ASC/DESC</code> ordenem el resultat alfabèticament o numèricament (ascendent per defecte, o descendent amb <code>DESC</code>). Amb <code>LIMIT N</code> podem demanar únicament les primeres N files.</p>
+        <pre class="font-mono text-xs bg-slate-900 dark:bg-slate-950 text-emerald-400 p-3 rounded-lg">SELECT nom, edat FROM alumnes ORDER BY edat DESC LIMIT 3;</pre>
+      </div>
+    `
+  },
+  {
+    id: "funcions-agrupament",
+    tag: "Estadístiques",
+    titol: "4. Funcions d'Agregació i GROUP BY",
+    resum: "Calcula totals, mitjanes, mínims i màxims agrupant la informació.",
+    contingut: `
+      <div class="space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>Quan la direcció del centre et demana informes, no voldrà llegir fila a fila. Voldrà xifres resumides. Per a això tenim les <strong>Funcions d'Agregació</strong>:</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+          <div class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><b class="text-indigo-700 dark:text-indigo-400">COUNT(*)</b>: Compta quantes files hi ha.</div>
+          <div class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><b class="text-indigo-700 dark:text-indigo-400">SUM(columna)</b>: Suma tots els valors.</div>
+          <div class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><b class="text-indigo-700 dark:text-indigo-400">AVG(columna)</b>: Calcula la mitjana aritmètica.</div>
+          <div class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><b class="text-indigo-700 dark:text-indigo-400">MIN(columna)</b>: Retorna el valor més petit.</div>
+          <div class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><b class="text-indigo-700 dark:text-indigo-400">MAX(columna)</b>: Retorna el valor més alt.</div>
+          <div class="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg"><b class="text-indigo-700 dark:text-indigo-400">AS àlies</b>: Dona un nom bonic a la columna resultat.</div>
+        </div>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-2">Agrupacions amb GROUP BY</h4>
+        <p class="text-sm">Si volem calcular aquests totals separats per categories (per exemple, <em>quants alumnes tenim a cada ciutat?</em>), utilitzem <code>GROUP BY ciutat</code>:</p>
+        <pre class="font-mono text-xs bg-slate-900 dark:bg-slate-950 text-emerald-400 p-3 rounded-lg">SELECT ciutat, COUNT(*) AS total_alumnes 
+FROM alumnes 
+GROUP BY ciutat;</pre>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-2">Com filtrar grups? La clàusula HAVING</h4>
+        <p class="text-sm">La clàusula <code>WHERE</code> filtra files <em>abans</em> d'agrupar. Si vols filtrar el resultat d'una agregació (per exemple: <em>només les ciutats que tinguin més de 2 alumnes</em>), has d'utilitzar <code>HAVING</code> després del <code>GROUP BY</code>:</p>
+        <pre class="font-mono text-xs bg-slate-900 dark:bg-slate-950 text-emerald-400 p-3 rounded-lg">SELECT ciutat, COUNT(*) AS total 
+FROM alumnes 
+GROUP BY ciutat 
+HAVING COUNT(*) > 2;</pre>
+      </div>
+    `
+  },
+  {
+    id: "relacions-joins",
+    tag: "Avançat",
+    titol: "5. Relacions entre Taules (JOINs)",
+    resum: "Aprèn a connectar diferents taules mitjançant les seves claus.",
+    contingut: `
+      <div class="space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>Una base de dades relacional és poderosa justament perquè no guardem tot en una sola taula gegant plena de dades duplicades. En comptes d'això, tenim la taula <code>alumnes</code> i la taula <code>cursos</code>, i les vinculem a la taula <code>matricules</code>.</p>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-1">INNER JOIN (La intersecció)</h4>
+        <p class="text-sm">Combina files de dues taules quan hi ha una coincidència entre els camps que les relacionen (indicat amb la paraula clau <code>ON</code>):</p>
+        <pre class="font-mono text-xs bg-slate-900 dark:bg-slate-950 text-emerald-400 p-3 rounded-lg">SELECT alumnes.nom, matricules.nota_final 
+FROM matricules 
+INNER JOIN alumnes ON matricules.alumne_id = alumnes.id;</pre>
+        <h4 class="font-bold text-slate-800 dark:text-white text-base pt-2">LEFT JOIN (Tots els de l'esquerra)</h4>
+        <p class="text-sm">El <code>LEFT JOIN</code> retorna <strong>tots</strong> els registres de la taula de l'esquerra (la primera que apareix després del FROM), i si no té cap registre vinculat a la taula de la dreta, omplirà els camps amb <code>NULL</code> (buit). És ideal per trobar casos com: <em>Cursos que encara no tenen cap matriculat</em>.</p>
+        <pre class="font-mono text-xs bg-slate-900 dark:bg-slate-950 text-emerald-400 p-3 rounded-lg">SELECT cursos.nom_curs, matricules.id AS matricula_id
+FROM cursos
+LEFT JOIN matricules ON cursos.id = matricules.curs_id
+WHERE matricules.id IS NULL;</pre>
+      </div>
+    `
+  }
+];
+
+const EXERCISES = [
+  { id: 1, nivell: "Inicial", titol: "1. Consulta general d'alumnes", context: "🏫 <strong>La Directora d'Estudis</strong> et diu: <em>'Benvingut/da a l'equip de coordinació! Per començar, necessito que consultis el llistat complet de tots els alumnes registrats a la base de dades per comprovar que tot funciona correctament.'</em>", objectiu: "Fes una consulta SQL que retorni <strong>totes les columnes i totes les files</strong> de la taula <code>alumnes</code>.", pistes: ["Per seleccionar totes les columnes d'una taula s'utilitza l'asterisc: <code>*</code>", "L'estructura bàsica és: <code>SELECT * FROM nom_de_la_taula;</code>"], solucio: "SELECT * FROM alumnes;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 2, nivell: "Inicial", titol: "2. Seleccionar camps de contacte", context: "📧 <strong>El Secretari acadèmic</strong> et demana: <em>'Per a la campanya informativa d'inici de curs només necessitem el nom, els cognoms i l'adreça de correu electrònic de l'alumnat. La resta de dades personals no ens calen ara mateix.'</em>", objectiu: "Mostra únicament les columnes <code>nom</code>, <code>cognoms</code> i <code>email</code> de la taula <code>alumnes</code>.", pistes: ["En lloc d'usar l'asterisc <code>*</code>, escriu el nom dels camps separats per una coma.", "Exemple: <code>SELECT camp1, camp2, camp3 FROM ...;</code>"], solucio: "SELECT nom, cognoms, email FROM alumnes;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 3, nivell: "Inicial", titol: "3. Filtrar alumnes de Girona", context: "📍 <strong>La Coordinadora de Territori</strong> et transmet: <em>'Obrim una seu física d'exàmens a Girona. Necessito saber quins alumnes viuen a aquesta ciutat per enviar-los una convocatòria especial.'</em>", objectiu: "Obtén tots els registres de la taula <code>alumnes</code> la <code>ciutat</code> dels quals sigui exactament <code>'Girona'</code>.", pistes: ["Per filtrar files utilitzem la clàusula <code>WHERE</code>.", "Els valors de text s'han d'escriure sempre entre cometes simples: <code>WHERE ciutat = 'Girona'</code>"], solucio: "SELECT * FROM alumnes WHERE ciutat = 'Girona';", consulta_inicial: "", tipus: "SELECT" },
+  { id: 4, nivell: "Inicial", titol: "4. Alumnes majors d'edat", context: "🔞 <strong>L'Assessoria Jurídica</strong> del centre et demana: <em>'Per formalitzar el consentiment de protecció de dades ens cal el nom i l'edat dels alumnes que tinguin 18 anys o més.'</em>", objectiu: "Mostra les columnes <code>nom</code> i <code>edat</code> de la taula <code>alumnes</code> on el camp <code>edat</code> sigui major o igual que 18 (<code>>= 18</code>).", pistes: ["L'operador per a major o igual és <code>>=</code>.", "Els números no porten cometes! Exemple: <code>WHERE edat >= 18</code>"], solucio: "SELECT nom, edat FROM alumnes WHERE edat >= 18;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 5, nivell: "Inicial", titol: "5. Cursos ordenats per preu", context: "💶 <strong>El Departament de Màrqueting</strong> prepara un fulletó: <em>'Volem mostrar el nostre catàleg de cursos ordenat des del més econòmic fins al més car perquè la gent vegi les opcions més accessibles primer.'</em>", objectiu: "Selecciona el <code>nom_curs</code> i el <code>preu</code> de la taula <code>cursos</code>, ordenant els resultats pel <code>preu</code> de manera ascendent.", pistes: ["Per ordenar fem servir <code>ORDER BY nom_columna ASC</code> (o simplement <code>ORDER BY preu</code> ja que ASC és el valor per defecte).", "Estructura: <code>SELECT nom_curs, preu FROM cursos ORDER BY preu ASC;</code>"], solucio: "SELECT nom_curs, preu FROM cursos ORDER BY preu ASC;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 6, nivell: "Inicial", titol: "6. Els 3 cursos amb més hores", context: "⏱️ <strong>Cap d'Estudis</strong>: <em>'Necessitem saber quines són les 3 formacions més intenses i llargues del nostre centre per planificar l'assignació d'aules grans.'</em>", objectiu: "Mostra el <code>nom_curs</code> i les <code>hores</code> de la taula <code>cursos</code>, ordenats per <code>hores</code> de manera descendent (<code>DESC</code>) i limitat als 3 primers resultats.", pistes: ["Per ordenar de més gran a més petit usem <code>ORDER BY hores DESC</code>.", "Al final de tot de la consulta afegim <code>LIMIT 3</code>."], solucio: "SELECT nom_curs, hores FROM cursos ORDER BY hores DESC LIMIT 3;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 7, nivell: "Inicial", titol: "7. Joves de Barcelona (Condicions múltiples)", context: "🎒 <strong>Dinamització Juvenil</strong>: <em>'L'Ajuntament de Barcelona ens ofereix beques de transport per a joves menors de 20 anys empadronats a Barcelona. Aconsegueix el nom, la ciutat i l'edat dels qui compleixin totes dues condicions.'</em>", objectiu: "Mostra <code>nom</code>, <code>ciutat</code> i <code>edat</code> de la taula <code>alumnes</code> on la <code>ciutat</code> sigui <code>'Barcelona'</code> I l'<code>edat</code> sigui inferior a 20 (<code>< 20</code>).", pistes: ["Per exigir dues condicions alhora fem servir l'operador lògic <code>AND</code>.", "Exemple: <code>WHERE ciutat = 'Barcelona' AND edat < 20</code>"], solucio: "SELECT nom, ciutat, edat FROM alumnes WHERE ciutat = 'Barcelona' AND edat < 20;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 8, nivell: "Intermedi", titol: "8. Cerca de patrons amb LIKE (Usuaris de Gmail)", context: "📬 <strong>Suport Tècnic</strong>: <em>'Hem detectat una incidència amb el proveïdor de Google. Necessitem la llista de noms i correus dels alumnes que utilitzin un correu que acabi en @gmail.com per avisar-los.'</em>", objectiu: "Selecciona el <code>nom</code> i l'<code>email</code> dels <code>alumnes</code> el correu dels quals contingui el patró que acaba en <code>'@gmail.com'</code>.", pistes: ["L'operador <code>LIKE</code> serveix per cercar patrons de text.", "El comodí <code>%</code> representa qualsevol seqüència de caràcters. Exemple: <code>WHERE email LIKE '%@gmail.com'</code>"], solucio: "SELECT nom, email FROM alumnes WHERE email LIKE '%@gmail.com';", consulta_inicial: "", tipus: "SELECT" },
+  { id: 9, nivell: "Intermedi", titol: "9. Cursos en rang de preu (BETWEEN)", context: "🏷️ <strong>Comercial</strong>: <em>'Volem fer una promoció de cursos de preu mitjà. Troba el nom del curs i el preu per a aquells cursos que costin entre 100€ i 200€ (inclosos).'</em>", objectiu: "Selecciona <code>nom_curs</code> i <code>preu</code> de la taula <code>cursos</code> amb preu comprès entre 100 i 200 usant l'operador <code>BETWEEN</code>.", pistes: ["L'operador <code>BETWEEN x AND y</code> inclou els dos extrems.", "Exemple: <code>WHERE preu BETWEEN 100 AND 200</code>"], solucio: "SELECT nom_curs, preu FROM cursos WHERE preu BETWEEN 100 AND 200;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 10, nivell: "Intermedi", titol: "10. Llista de valors amb IN", context: "🚌 <strong>Coordinació d'itineraris</strong>: <em>'Estem organitzant una ruta d'autobús per a les províncies de Lleida i Tarragona. Qui són els alumnes que viuen en alguna d'aquestes dues ciutats?'</em>", objectiu: "Obtén el <code>nom</code> i la <code>ciutat</code> dels <code>alumnes</code> la ciutat dels quals sigui <code>'Lleida'</code> o <code>'Tarragona'</code> utilitzant l'operador <code>IN</code>.", pistes: ["En lloc d'escriure múltiples <code>OR</code>, és més net utilitzar <code>IN ('valor1', 'valor2')</code>.", "Exemple: <code>WHERE ciutat IN ('Lleida', 'Tarragona')</code>"], solucio: "SELECT nom, ciutat FROM alumnes WHERE ciutat IN ('Lleida', 'Tarragona');", consulta_inicial: "", tipus: "SELECT" },
+  { id: 11, nivell: "Intermedi", titol: "11. Ciutats úniques sense repeticions (DISTINCT)", context: "🗺️ <strong>Secretaria</strong>: <em>'Volem saber de quantes ciutats diferents procedeix el nostre alumnat, però sense que apareguin noms de ciutats repetits al llistat.'</em>", objectiu: "Retorna la llista única de <code>ciutat</code> de la taula <code>alumnes</code> sense duplicats utilitzant <code>DISTINCT</code>.", pistes: ["La paraula clau <code>DISTINCT</code> s'escriu just després de <code>SELECT</code>.", "Sintaxi: <code>SELECT DISTINCT nom_columna FROM taula;</code>"], solucio: "SELECT DISTINCT ciutat FROM alumnes;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 12, nivell: "Intermedi", titol: "12. Recompte d'alumnes actius (COUNT)", context: "📊 <strong>Direcció Financera</strong>: <em>'Quants alumnes tenim actualment en estat actiu (actiu = 1)? Necessito la xifra exacta en una columna anomenada total_actius.'</em>", objectiu: "Compta quants registres tenen <code>actiu = 1</code> a la taula <code>alumnes</code> usant <code>COUNT(*)</code> i posa-li l'àlies <code>AS total_actius</code>.", pistes: ["La funció d'agregació és <code>COUNT(*)</code>.", "Per rebatejar la columna resultant fes servir <code>AS total_actius</code> combinat amb <code>WHERE actiu = 1</code>."], solucio: "SELECT COUNT(*) AS total_actius FROM alumnes WHERE actiu = 1;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 13, nivell: "Intermedi", titol: "13. Càlcul de la nota mitjana (AVG)", context: "📈 <strong>Comissió de Qualitat Acadèmica</strong>: <em>'Volem conèixer el rendiment global del centre. Pots calcular la mitjana de totes les notes finals registrades a les matrícules?'</em>", objectiu: "Calcula la mitjana de la columna <code>nota_final</code> de la taula <code>matricules</code> i anomena el resultat <code>nota_mitjana</code>.", pistes: ["La funció per calcular la mitjana aritmètica en SQL és <code>AVG(nom_columna)</code>.", "Estructura: <code>SELECT AVG(nota_final) AS nota_mitjana FROM matricules;</code>"], solucio: "SELECT AVG(nota_final) AS nota_mitjana FROM matricules;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 14, nivell: "Intermedi", titol: "14. Cursos per departament (GROUP BY)", context: "🏢 <strong>Deganat</strong>: <em>'Volem saber l'oferta formativa de cada departament: quants cursos ofereix cadascun? Mostra el departament i la quantitat de cursos.'</em>", objectiu: "Selecciona el <code>departament</code> i el recompte de cursos amb <code>COUNT(*) AS total_cursos</code> de la taula <code>cursos</code>, agrupant pel <code>departament</code>.", pistes: ["Quan fem càlculs per grup utilitzem <code>GROUP BY columna_d_agrupacio</code> al final.", "Exemple: <code>SELECT departament, COUNT(*) AS total_cursos FROM cursos GROUP BY departament;</code>"], solucio: "SELECT departament, COUNT(*) AS total_cursos FROM cursos GROUP BY departament;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 15, nivell: "Intermedi", titol: "15. Filtrar grups amb HAVING", context: "🔍 <strong>Direcció</strong>: <em>'Només ens interessen els departaments grans que ofereixen MÉS d'un curs. Mostra el departament i el total de cursos per a aquests casos.'</em>", objectiu: "Mostra <code>departament</code> i <code>COUNT(*) AS total</code> de la taula <code>cursos</code>, agrupats per departament, però filtrant només aquells que tinguin <code>HAVING COUNT(*) > 1</code>.", pistes: ["La condició sobre el resultat de l'agrupació es posa amb <code>HAVING</code> després del <code>GROUP BY</code>.", "Recorda: no es pot posar una funció d'agregació com <code>COUNT(*)</code> dins del <code>WHERE</code>."], solucio: "SELECT departament, COUNT(*) AS total FROM cursos GROUP BY departament HAVING COUNT(*) > 1;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 16, nivell: "Intermedi", titol: "16. Inserir un nou alumne (INSERT INTO)", context: "📝 <strong>Recepció</strong>: <em>'S'acaba de presentar a secretaria un nou alumne per donar-se d'alta. Registra'l a la base de dades amb les seves dades completes!'</em>", objectiu: "Afegeix un nou registre a la taula <code>alumnes</code> amb aquestes dades:<br><code>id: 13</code>, <code>nom: 'Sergi'</code>, <code>cognoms: 'Pla Bosch'</code>, <code>email: 'sergi.pla@gmail.com'</code>, <code>edat: 20</code>, <code>ciutat: 'Barcelona'</code>, <code>telefon: '677112233'</code>, <code>actiu: 1</code>.", pistes: ["La sintaxi és: <code>INSERT INTO alumnes (id, nom, cognoms, email, edat, ciutat, telefon, actiu) VALUES (...);</code>", "Posa els textos entre cometes simples i els números sense cometes."], solucio: "INSERT INTO alumnes (id, nom, cognoms, email, edat, ciutat, telefon, actiu) VALUES (13, 'Sergi', 'Pla Bosch', 'sergi.pla@gmail.com', 20, 'Barcelona', '677112233', 1);", consulta_inicial: "", tipus: "DML", taula_afectada: "alumnes", test_sql: "SELECT * FROM alumnes WHERE id = 13;" },
+  { id: 17, nivell: "Intermedi", titol: "17. Modificar dades d'un alumne (UPDATE)", context: "📞 <strong>Secretaria</strong>: <em>'L'alumne amb id = 1 (en Marc Serra) ha vingut a comunicar-nos que ha canviat el seu número de telèfon. El seu nou número és '699112233'.'</em>", objectiu: "Actualitza el camp <code>telefon</code> a <code>'699112233'</code> a la taula <code>alumnes</code> únicament per al registre amb <code>id = 1</code>.", pistes: ["La instrucció per actualitzar dades existents és <code>UPDATE ... SET ... WHERE ...;</code>", "Molt important: no oblidis el <code>WHERE id = 1</code>!"], solucio: "UPDATE alumnes SET telefon = '699112233' WHERE id = 1;", consulta_inicial: "", tipus: "DML", taula_afectada: "alumnes", test_sql: "SELECT telefon FROM alumnes WHERE id = 1;" },
+  { id: 18, nivell: "Avançat", titol: "18. Cancel·lació de matrícula (DELETE)", context: "❌ <strong>Comptabilitat</strong>: <em>'La matrícula amb id = 10 ha estat anul·lada per impagament i desig exprés de l'estudiant. S'ha d'eliminar aquest registre de la base de dades.'</em>", objectiu: "Elimina de la taula <code>matricules</code> el registre que té <code>id = 10</code> utilitzant <code>DELETE FROM</code>.", pistes: ["La sintaxi per esborrar un registre és: <code>DELETE FROM nom_taula WHERE condicio;</code>", "Assegura't de filtrar exactament per <code>WHERE id = 10</code>."], solucio: "DELETE FROM matricules WHERE id = 10;", consulta_inicial: "", tipus: "DML", taula_afectada: "matricules", test_sql: "SELECT * FROM matricules WHERE id = 10;" },
+  { id: 19, nivell: "Avançat", titol: "19. Càlcul de preu amb IVA (Operacions i Àlies)", context: "🧾 <strong>Facturació</strong>: <em>'Necessitem emetre la tarifa oficial dels cursos amb l'IVA del 21% aplicat. Mostra el nom del curs, el preu base i una columna calculada anomenada preu_amb_iva.'</em>", objectiu: "Selecciona <code>nom_curs</code>, <code>preu</code> i el càlcul <code>preu * 1.21 AS preu_amb_iva</code> de la taula <code>cursos</code>.", pistes: ["Pots fer operacions matemàtiques directament al <code>SELECT</code>: <code>preu * 1.21</code>.", "Fes servir <code>AS preu_amb_iva</code> per donar nom a la nova columna resultant."], solucio: "SELECT nom_curs, preu, preu * 1.21 AS preu_amb_iva FROM cursos;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 20, nivell: "Avançat", titol: "20. Primer INNER JOIN (Alumne i Nota)", context: "🤝 <strong>Cap d'Estudis</strong>: <em>'A la taula matrícules només tenim l'alumne_id, però volem veure el nom real de l'alumne i la seva nota_final. Connecta les dues taules!'</em>", objectiu: "Fes un <code>INNER JOIN</code> entre <code>alumnes</code> i <code>matricules</code> connectant <code>alumnes.id = matricules.alumne_id</code>, i mostra <code>alumnes.nom</code> i <code>matricules.nota_final</code>.", pistes: ["La clàusula és: <code>FROM alumnes INNER JOIN matricules ON alumnes.id = matricules.alumne_id</code>.", "Indica al <code>SELECT</code> el nom de la taula davant del punt per evitar ambigüitats: <code>alumnes.nom, matricules.nota_final</code>."], solucio: "SELECT alumnes.nom, matricules.nota_final FROM alumnes INNER JOIN matricules ON alumnes.id = matricules.alumne_id;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 21, nivell: "Avançat", titol: "21. JOIN amb filtres (Alumnes aprovats)", context: "🎓 <strong>Secretaria d'Avaluacions</strong>: <em>'Volem fer la llista d'honor. Mostra el nom de l'alumne i la seva nota_final, però només per a aquelles matrícules on la nota_final sigui 5 o superior (aprovats), ordenat per nota de més alta a més baixa.'</em>", objectiu: "Fes un <code>INNER JOIN</code> entre <code>alumnes</code> i <code>matricules</code> amb la condició <code>WHERE matricules.nota_final >= 5</code> i ordenat per <code>matricules.nota_final DESC</code>.", pistes: ["Pots combinar <code>INNER JOIN</code> amb <code>WHERE</code> i <code>ORDER BY</code> com en qualsevol consulta.", "L'ordre de clàusules és: <code>SELECT ... FROM ... INNER JOIN ... ON ... WHERE ... ORDER BY ...</code>"], solucio: "SELECT alumnes.nom, matricules.nota_final FROM alumnes INNER JOIN matricules ON alumnes.id = matricules.alumne_id WHERE matricules.nota_final >= 5 ORDER BY matricules.nota_final DESC;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 22, nivell: "Avançat", titol: "22. Connexió de 3 taules (Alumne, Curs i Nota)", context: "🌐 <strong>Portal de l'Estudiant</strong>: <em>'Necessitem generar l'expedient acadèmic complet: per a cada matrícula, volem veure el nom de l'alumne, el títol del curs que fa i la nota final que ha tret.'</em>", objectiu: "Enllaça les tres taules <code>matricules</code>, <code>alumnes</code> i <code>cursos</code> amb <code>INNER JOIN</code>. Mostra: <code>alumnes.nom</code>, <code>cursos.nom_curs</code> i <code>matricules.nota_final</code>.", pistes: ["Pots encadenar dos <code>INNER JOIN</code> consecutius:", "<code>FROM matricules INNER JOIN alumnes ON matricules.alumne_id = alumnes.id INNER JOIN cursos ON matricules.curs_id = cursos.id</code>"], solucio: "SELECT alumnes.nom, cursos.nom_curs, matricules.nota_final FROM matricules INNER JOIN alumnes ON matricules.alumne_id = alumnes.id INNER JOIN cursos ON matricules.curs_id = cursos.id;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 23, nivell: "Avançat", titol: "23. Cursos sense alumnes (LEFT JOIN)", context: "⚠️ <strong>Cap d'Oferta Formativa</strong>: <em>'Alguns cursos potser no s'han promocionat prou i tenen zero inscrits. Volem saber quins cursos no tenen cap matrícula registrada per reforçar la publicitat.'</em>", objectiu: "Fes un <code>LEFT JOIN</code> de <code>cursos</code> cap a <code>matricules</code> per trobar el <code>cursos.nom_curs</code> dels cursos que no tenen cap matrícula (és a dir, on <code>matricules.id IS NULL</code>).", pistes: ["El <code>LEFT JOIN</code> manté tots els cursos encara que no tinguin matrícules coincidents.", "Filtra amb <code>WHERE matricules.id IS NULL</code> per detectar els cursos orfes d'estudiants."], solucio: "SELECT cursos.nom_curs FROM cursos LEFT JOIN matricules ON cursos.id = matricules.curs_id WHERE matricules.id IS NULL;", consulta_inicial: "", tipus: "SELECT" },
+  { id: 24, nivell: "Avançat", titol: "24. Subconsultes: Alumnes per sobre de la mitjana", context: "🏆 <strong>Comissió de Beques d'Excel·lència</strong>: <em>'Volem premiar als alumnes excel·lents. Necessitem l'alumne_id i la nota_final d'aquelles matrícules que tinguin una nota estrictament superior a la mitjana general de totes les matrícules.'</em>", objectiu: "Selecciona <code>alumne_id</code> i <code>nota_final</code> de <code>matricules</code> on <code>nota_final > (SELECT AVG(nota_final) FROM matricules)</code>.", pistes: ["Una subconsulta és una consulta SQL entre parèntesis <code>(...)</code> dins d'una altra consulta.", "Posa <code>WHERE nota_final > (SELECT AVG(nota_final) FROM matricules)</code>."], solucio: "SELECT alumne_id, nota_final FROM matricules WHERE nota_final > (SELECT AVG(nota_final) FROM matricules);", consulta_inicial: "", tipus: "SELECT" },
+  { id: 25, nivell: "Avançat", titol: "25. Repte Final de Coordinació: Informe de Rendibilitat", context: "👑 <strong>Consell Rector</strong>: <em>'Enhorabona per la feina d'aquest curs! Com a tasca final de coordinació, prepara l'informe executiu: per a cada curs amb matrícules, mostra el nom del curs (nom_curs), el total d'alumnes inscrits (total_matriculats) i el total recaptat en euros (total_recaptat = suma del preu del curs). Ordena-ho de més a menys alumnes.'</em>", objectiu: "Fes un <code>INNER JOIN</code> entre <code>cursos</code> i <code>matricules</code>. Mostra: <code>cursos.nom_curs</code>, <code>COUNT(matricules.id) AS total_matriculats</code>, i <code>SUM(cursos.preu) AS total_recaptat</code>. Agrupa per <code>cursos.id, cursos.nom_curs</code> i ordena per <code>total_matriculats DESC</code>.", pistes: ["Relaciona cursos i matrícules: <code>FROM cursos INNER JOIN matricules ON cursos.id = matricules.curs_id</code>.", "Agrupa per <code>GROUP BY cursos.id, cursos.nom_curs</code> i compta les matrícules amb <code>COUNT(matricules.id)</code>.", "Calcula el total recaptat amb <code>SUM(cursos.preu) AS total_recaptat</code> i ordena amb <code>ORDER BY total_matriculats DESC</code>."], solucio: "SELECT cursos.nom_curs, COUNT(matricules.id) AS total_matriculats, SUM(cursos.preu) AS total_recaptat FROM cursos INNER JOIN matricules ON cursos.id = matricules.curs_id GROUP BY cursos.id, cursos.nom_curs ORDER BY total_matriculats DESC;", consulta_inicial: "", tipus: "SELECT" }
+];
+
+let currentExerciseIndex = 0;
+let userProgress = [];
+
+function safeGetStorage(key) {
+  try { return window.localStorage ? window.localStorage.getItem(key) : null; } catch (e) { return null; }
+}
+function safeSetStorage(key, value) {
+  try { if (window.localStorage) window.localStorage.setItem(key, value); } catch (e) {}
+}
+
+function initApp() {
+  try {
+    const savedTheme = safeGetStorage('edudata_theme') || 'auto';
+    const selector = document.getElementById('themeSelector');
+    if (selector) selector.value = savedTheme;
+    applyTheme(savedTheme);
+
+    initUserProgress();
+    resetDatabase();
+    setupEventListeners();
+    renderTheoryModule();
+    renderSchemaView();
+    renderExercise(currentExerciseIndex);
+    updateProgressBar();
+    updateResultsTabLock();
+    switchTab("teoria");
+  } catch (err) {
+    console.error("Error inicialitzant l'aplicació:", err);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
+
+function initUserProgress() {
+  const saved = safeGetStorage("edudata_mysql_progress");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === EXERCISES.length) {
+        userProgress = parsed;
+        return;
+      }
+    } catch (e) {}
+  }
+  userProgress = createFreshProgress();
+}
+
+function createFreshProgress() {
+  return EXERCISES.map((ex) => ({
+    id: ex.id,
+    status: "pending",
+    userQuery: ex.consulta_inicial || "",
+    lastError: null,
+    attempts: 0,
+    solutionRevealed: false
+  }));
+}
+
+function isResultsUnlocked() {
+  return userProgress.length === EXERCISES.length && userProgress.every((p) => p.status !== "pending");
+}
+
+function updateResultsTabLock() {
+  const btn = document.querySelector('[data-tab="resultats"]');
+  if (!btn) return;
+  const unlocked = isResultsUnlocked();
+  if (unlocked) {
+    btn.innerHTML = `<span>🏆</span> Resultats & Avaluació`;
+    btn.title = "Veure l'informe final d'avaluació";
+    btn.classList.remove("opacity-60");
+  } else {
+    const remaining = userProgress.filter((p) => p.status === "pending").length;
+    btn.innerHTML = `<span>🔒</span> Resultats & Avaluació`;
+    btn.title = `Completa o salta totes les 25 activitats per desbloquejar (te'n falten ${remaining})`;
+    btn.classList.add("opacity-60");
+  }
+}
+
+function saveProgress() {
+  safeSetStorage("edudata_mysql_progress", JSON.stringify(userProgress));
+  updateProgressBar();
+  updateResultsTabLock();
+  renderPillsNavigation();
+}
+
+function setupEventListeners() {
+  document.querySelectorAll("[data-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tabId = btn.getAttribute("data-tab");
+      switchTab(tabId);
+    });
+  });
+
+  const resetAllBtn = document.getElementById("btnResetAllProgress");
+  if (resetAllBtn) {
+    let confirmPending = false;
+    resetAllBtn.addEventListener("click", () => {
+      if (!confirmPending) {
+        confirmPending = true;
+        resetAllBtn.textContent = "Clica de nou per confirmar";
+        resetAllBtn.classList.add("bg-rose-600", "text-white");
+        setTimeout(() => {
+          confirmPending = false;
+          resetAllBtn.textContent = "Reiniciar tot";
+          resetAllBtn.classList.remove("bg-rose-600", "text-white");
+        }, 3500);
+        return;
+      }
+      confirmPending = false;
+      resetAllBtn.textContent = "Reiniciar tot";
+      resetAllBtn.classList.remove("bg-rose-600", "text-white");
+
+      userProgress = createFreshProgress();
+      currentExerciseIndex = 0;
+      resetDatabase();
+      saveProgress();
+      renderExercise(currentExerciseIndex);
+      switchTab("simulador");
+      showToast("Progrés restablert correctament", "info");
+    });
+  }
+
+  const sqlEditor = document.getElementById("sqlEditor");
+  if (sqlEditor) {
+    sqlEditor.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        runAndValidateExercise();
+      }
+    });
+  }
+}
+
+function switchTab(tabId) {
+  if (tabId === "resultats" && !isResultsUnlocked()) {
+    const remaining = userProgress.filter((p) => p.status === "pending").length;
+    showToast(`🔒 Completa o salta totes les activitats per veure els resultats (te'n falten ${remaining}).`, "info");
+    return;
+  }
+
+  document.querySelectorAll(".view-panel").forEach((panel) => {
+    panel.classList.add("hidden");
+  });
+
+  const target = document.getElementById(`view-${tabId}`);
+  if (target) target.classList.remove("hidden");
+
+  document.querySelectorAll("[data-tab]").forEach((btn) => {
+    const isResultsLocked = btn.getAttribute("data-tab") === "resultats" && !isResultsUnlocked();
+    if (btn.getAttribute("data-tab") === tabId) {
+      btn.className = "flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all bg-indigo-600 text-white shadow-sm";
+    } else {
+      btn.className = `flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 ${isResultsLocked ? "opacity-60" : ""}`;
+    }
+  });
+
+  if (tabId === "resultats") renderResultsScreen();
+  else if (tabId === "esquema") renderSchemaView();
+}
+
+function updateProgressBar() {
+  const completed = userProgress.filter((p) => p.status === "success").length;
+  const percentage = Math.round((completed / EXERCISES.length) * 100);
+  const bar = document.getElementById("headerProgressBar");
+  const text = document.getElementById("headerProgressText");
+  if (bar) bar.style.width = `${percentage}%`;
+  if (text) text.textContent = `${completed} de ${EXERCISES.length} assolits (${percentage}%)`;
+}
+
+function renderPillsNavigation() {
+  const container = document.getElementById("exercisePillsContainer");
+  if (!container) return;
+  container.innerHTML = "";
+  EXERCISES.forEach((ex, idx) => {
+    const prog = userProgress[idx];
+    const isCurrent = idx === currentExerciseIndex;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.title = `${ex.titol} (${ex.nivell})`;
+
+    let bgClass = "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700";
+    let icon = `${idx + 1}`;
+    if (prog.status === "success") { bgClass = "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-bold"; icon = `✓ ${idx + 1}`; }
+    else if (prog.status === "skipped") { bgClass = "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"; icon = `↷ ${idx + 1}`; }
+    else if (prog.status === "error") { bgClass = "bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700"; icon = `✗ ${idx + 1}`; }
+    if (isCurrent) bgClass += " ring-2 ring-indigo-600 dark:ring-indigo-400 ring-offset-1 dark:ring-offset-slate-900 z-10";
+
+    btn.className = `flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${bgClass}`;
+    btn.innerHTML = icon;
+    btn.onclick = () => {
+      saveCurrentEditorState();
+      currentExerciseIndex = idx;
+      renderExercise(idx);
+    };
+    container.appendChild(btn);
+  });
+}
+
+function saveCurrentEditorState() {
+  const editor = document.getElementById("sqlEditor");
+  if (editor && userProgress[currentExerciseIndex]) {
+    userProgress[currentExerciseIndex].userQuery = editor.value;
+    saveProgress();
+  }
+}
+
+function renderExercise(index) {
+  if (index < 0 || index >= EXERCISES.length) return;
+  currentExerciseIndex = index;
+  const ex = EXERCISES[index];
+  const prog = userProgress[index];
+
+  const levelBadge = document.getElementById("exLevelBadge");
+  if (levelBadge) {
+    if (ex.nivell === "Inicial") {
+      levelBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5";
+      levelBadge.innerHTML = `<span>🌱</span> Nivell Inicial (Bàsic)`;
+    } else if (ex.nivell === "Intermedi") {
+      levelBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 flex items-center gap-1.5";
+      levelBadge.innerHTML = `<span>⚡</span> Nivell Intermedi`;
+    } else {
+      levelBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1.5";
+      levelBadge.innerHTML = `<span>🚀</span> Nivell Mitjà-Alt (Avançat)`;
+    }
+  }
+
+  const numElem = document.getElementById("exNumberText");
+  const titleElem = document.getElementById("exTitleText");
+  if (numElem) numElem.textContent = `Activitat ${ex.id} de ${EXERCISES.length}`;
+  if (titleElem) titleElem.textContent = ex.titol.replace(/^\d+\.\s*/, "");
+
+  const contextElem = document.getElementById("exContextText");
+  const objElem = document.getElementById("exObjectiveText");
+  if (contextElem) contextElem.innerHTML = ex.context;
+  if (objElem) objElem.innerHTML = ex.objectiu;
+
+  const editor = document.getElementById("sqlEditor");
+  if (editor) editor.value = prog.userQuery !== undefined ? prog.userQuery : (ex.consulta_inicial || "");
+
+  const hintsBox = document.getElementById("exHintsBox");
+  const hintsContent = document.getElementById("exHintsContent");
+  if (hintsBox && hintsContent) {
+    hintsBox.classList.add("hidden");
+    hintsContent.innerHTML = `<ul class="space-y-2 list-disc pl-5 text-sm text-amber-900 dark:text-amber-200">${ex.pistes.map((p) => `<li>${p}</li>`).join("")}</ul>`;
+  }
+
+  const solutionBox = document.getElementById("exSolutionBox");
+  const solutionCode = document.getElementById("exSolutionCode");
+  if (solutionBox && solutionCode) {
+    solutionBox.classList.add("hidden");
+    solutionCode.textContent = ex.solucio;
+  }
+
+  const feedbackArea = document.getElementById("exFeedbackArea");
+  const resultTableContainer = document.getElementById("exResultTableContainer");
+  const nextExBtn = document.getElementById("btnNextExercise");
+
+  if (feedbackArea) feedbackArea.className = "hidden";
+  if (resultTableContainer) {
+    resultTableContainer.innerHTML = `
+      <div class="p-8 text-center text-slate-400 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+        <span class="text-2xl block mb-1">🐬</span>
+        <p class="text-xs">Escriu la teva consulta SQL a l'editor i prem <strong>"Executar i Comprovar"</strong> per veure aquí el resultat de la base de dades.</p>
+      </div>
+    `;
+  }
+  if (nextExBtn) nextExBtn.classList.add("hidden");
+
+  if (prog.status === "success") {
+    showFeedback("success", "Aquesta activitat ja l'havies superat correctament! Pots tornar-la a executar o seguir avançant.", false);
+    if (nextExBtn) {
+      nextExBtn.classList.remove("hidden");
+      nextExBtn.innerHTML = currentExerciseIndex === EXERCISES.length - 1
+        ? `Veure Resultats Finals 🏆`
+        : `Següent Activitat (${currentExerciseIndex + 2} de ${EXERCISES.length}) ➔`;
+    }
+  } else if (prog.status === "skipped") {
+    showFeedback("warning", "Vas saltar aquesta activitat. Pots intentar-la ara o passar a una altra.", false);
+  }
+
+  renderPillsNavigation();
+}
+
+function runAndValidateExercise() {
+  const ex = EXERCISES[currentExerciseIndex];
+  const prog = userProgress[currentExerciseIndex];
+  const editor = document.getElementById("sqlEditor");
+  const userSql = editor ? editor.value.trim() : "";
+
+  if (!userSql) {
+    showFeedback("error", "L'editor està buit! Si us plau, escriu una consulta SQL abans d'executar.");
+    return;
+  }
+
+  prog.userQuery = userSql;
+  prog.attempts += 1;
+  resetDatabase();
+  const nextExBtn = document.getElementById("btnNextExercise");
+
+  try {
+    if (ex.tipus === "SELECT") {
+      const userResult = runSQL(userSql);
+      resetDatabase();
+      const expectedResult = runSQL(ex.solucio);
+      renderResultTable(userResult);
+      const validation = validateSelectResults(userResult, expectedResult);
+
+      if (validation.valid) {
+        prog.status = "success";
+        prog.lastError = null;
+        saveProgress();
+        showFeedback("success", `🎉 <strong>Molt bona feina!</strong> El resultat coincideix exactament amb el que demanava l'activitat.`);
+        if (nextExBtn) {
+          nextExBtn.classList.remove("hidden");
+          nextExBtn.innerHTML = currentExerciseIndex === EXERCISES.length - 1 ? `Veure Resultats Finals 🏆` : `Següent Activitat (${currentExerciseIndex + 2} de ${EXERCISES.length}) ➔`;
+        }
+      } else {
+        prog.status = "error";
+        prog.lastError = validation.reason;
+        saveProgress();
+        showFeedback("warning", `⚠️ <strong>La consulta s'ha executat, però el resultat no és l'esperat:</strong><br>${validation.reason}`);
+      }
+    } else {
+      resetDatabase();
+      runSQL(userSql);
+      const actualState = runSQL(ex.test_sql);
+      resetDatabase();
+      runSQL(ex.solucio);
+      const expectedState = runSQL(ex.test_sql);
+      renderResultTable(actualState);
+      const validation = validateSelectResults(actualState, expectedState);
+
+      if (validation.valid) {
+        prog.status = "success";
+        prog.lastError = null;
+        saveProgress();
+        showFeedback("success", `🎉 <strong>Molt bona feina!</strong> Les dades de la taula s'han actualitzat correctament.`);
+        if (nextExBtn) {
+          nextExBtn.classList.remove("hidden");
+          nextExBtn.innerHTML = currentExerciseIndex === EXERCISES.length - 1 ? `Veure Resultats Finals 🏆` : `Següent Activitat (${currentExerciseIndex + 2} de ${EXERCISES.length}) ➔`;
+        }
+      } else {
+        prog.status = "error";
+        prog.lastError = "L'operació de modificació no ha deixat la taula en l'estat requerit.";
+        saveProgress();
+        showFeedback("warning", `⚠️ ${prog.lastError} Revisa els valors i les condicions del WHERE.`);
+      }
+    }
+  } catch (err) {
+    prog.status = "error";
+    prog.lastError = err.message || "Error desconegut de sintaxi";
+    saveProgress();
+    showFeedback("error", `❌ <strong>Error de sintaxi SQL:</strong><br><span class="font-mono text-xs">${escapeHtml(prog.lastError)}</span><br><span class="text-xs mt-1 block">Revisa que els noms de columnes i taules estiguin ben escrits i que el punt i coma o les cometes estiguin tancades.</span>`);
+    const resultContainer = document.getElementById("exResultTableContainer");
+    if (resultContainer) resultContainer.innerHTML = "";
+  }
+  renderPillsNavigation();
+}
+
+function validateSelectResults(userRows, expectedRows) {
+  if (!Array.isArray(userRows)) return { valid: false, reason: "La consulta no ha retornat cap taula o conjunt de registres vàlid." };
+  if (userRows.length !== expectedRows.length) return { valid: false, reason: `S'esperaven <strong>${expectedRows.length}</strong> files de resultat, però la teva consulta n'ha retornat <strong>${userRows.length}</strong>.` };
+  if (expectedRows.length === 0 && userRows.length === 0) return { valid: true };
+
+  const expectedCols = Object.keys(expectedRows[0]).map((c) => c.toLowerCase());
+  const userCols = Object.keys(userRows[0]).map((c) => c.toLowerCase());
+  if (expectedCols.length !== userCols.length) return { valid: false, reason: `S'esperaven <strong>${expectedCols.length}</strong> columnes (<code>${expectedCols.join(", ")}</code>), però la teva consulta en mostra <strong>${userCols.length}</strong> (<code>${userCols.join(", ")}</code>).` };
+
+  const normalizeRow = (r) => JSON.stringify(Object.values(r).map((v) => (typeof v === "number" ? Math.round(v * 100) / 100 : v)));
+  const userSorted = [...userRows].map(normalizeRow).sort();
+  const expectedSorted = [...expectedRows].map(normalizeRow).sort();
+
+  for (let i = 0; i < expectedSorted.length; i++) {
+    if (userSorted[i] !== expectedSorted[i]) return { valid: false, reason: "Les dades retornades a les files no coincideixen amb els criteris de filtratge requerits a l'enunciat." };
+  }
+  return { valid: true };
+}
+
+function renderResultTable(rows) {
+  const container = document.getElementById("exResultTableContainer");
+  if (!container) return;
+  if (!rows || rows.length === 0) {
+    container.innerHTML = `<div class="p-6 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"><p class="text-sm font-medium">La consulta no ha retornat cap registre (0 files).</p></div>`;
+    return;
+  }
+  const columns = Object.keys(rows[0]);
+  container.innerHTML = `
+    <div class="max-h-72 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner bg-white dark:bg-slate-900">
+      <table class="w-full table-auto text-left text-[11px] font-mono leading-tight">
+        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 uppercase tracking-tight sticky top-0 border-b border-slate-200 dark:border-slate-700">
+          <tr>
+            <th class="px-1.5 py-2 font-bold text-slate-400 w-7 text-center">#</th>
+            ${columns.map((col) => `<th class="px-1.5 py-2 font-semibold break-words">${escapeHtml(col)}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+          ${rows.map((row, idx) => `
+            <tr class="hover:bg-indigo-50/40 dark:hover:bg-indigo-950/40 transition-colors">
+              <td class="px-1.5 py-1.5 text-center text-slate-400 font-mono text-[10px]">${idx + 1}</td>
+              ${columns.map((col) => {
+                let val = row[col];
+                if (val === null || val === undefined) val = `<span class="text-slate-400 italic">NULL</span>`;
+                else if (typeof val === "boolean") val = val ? "1" : "0";
+                else if (typeof val === "number" && !Number.isInteger(val)) val = Math.round(val * 100) / 100;
+                return `<td class="px-1.5 py-1.5 break-all">${typeof val === "string" && val.includes("<span") ? val : escapeHtml(String(val))}</td>`;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="text-right text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Total files retornades: <strong class="text-slate-700 dark:text-slate-200">${rows.length}</strong></div>
+  `;
+}
+
+function showFeedback(type, message, scroll = true) {
+  const area = document.getElementById("exFeedbackArea");
+  if (!area) return;
+  area.classList.remove("hidden");
+  let bgClass = "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200", icon = "✓";
+  if (type === "warning") { bgClass = "bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200"; icon = "⚠️"; }
+  else if (type === "error") { bgClass = "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200"; icon = "❌"; }
+  area.className = `p-4 rounded-xl border flex items-start gap-3 transition-all ${bgClass}`;
+  area.innerHTML = `<span class="text-lg flex-shrink-0 mt-0.5">${icon}</span><div class="text-sm leading-relaxed">${message}</div>`;
+  if (scroll) area.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function skipCurrentExercise() {
+  saveCurrentEditorState();
+  const prog = userProgress[currentExerciseIndex];
+  if (prog.status !== "success") {
+    prog.status = "skipped";
+    prog.lastError = "Activitat saltada per l'alumne.";
+    saveProgress();
+  }
+  goToNextExercise();
+}
+
+function goToNextExercise() {
+  saveCurrentEditorState();
+  if (currentExerciseIndex < EXERCISES.length - 1) {
+    currentExerciseIndex += 1;
+    renderExercise(currentExerciseIndex);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    switchTab("resultats");
+  }
+}
+
+function goToPrevExercise() {
+  saveCurrentEditorState();
+  if (currentExerciseIndex > 0) {
+    currentExerciseIndex -= 1;
+    renderExercise(currentExerciseIndex);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function toggleHints() {
+  const box = document.getElementById("exHintsBox");
+  if (box) box.classList.toggle("hidden");
+}
+
+function toggleSolution() {
+  const box = document.getElementById("exSolutionBox");
+  if (!box) return;
+  if (box.classList.contains("hidden")) {
+    box.classList.remove("hidden");
+    userProgress[currentExerciseIndex].solutionRevealed = true;
+    saveProgress();
+  } else {
+    box.classList.add("hidden");
+  }
+}
+
+function copySolutionToEditor() {
+  const ex = EXERCISES[currentExerciseIndex];
+  const editor = document.getElementById("sqlEditor");
+  if (editor && ex) {
+    editor.value = ex.solucio;
+    showToast("Solució copiada a l'editor!", "info");
+  }
+}
+
+function resetEditor() {
+  const ex = EXERCISES[currentExerciseIndex];
+  const editor = document.getElementById("sqlEditor");
+  if (editor && ex) {
+    editor.value = ex.consulta_inicial || "";
+    showToast("Editor restablert", "info");
+  }
+}
+
+function renderTheoryModule() {
+  const container = document.getElementById("theoryListContainer");
+  if (!container) return;
+  container.innerHTML = THEORY_MODULES.map((mod, idx) => `
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm material-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">${mod.tag}</span>
+        <span class="text-xs text-slate-400 font-mono">Part 0${idx + 1}</span>
+      </div>
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">${mod.titol}</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">${mod.resum}</p>
+      <div class="border-t border-slate-100 dark:border-slate-800 pt-4">${mod.contingut}</div>
+    </div>
+  `).join("");
+}
+
+function renderSchemaView() {
+  const container = document.getElementById("schemaTablesContainer");
+  if (!container) return;
+  const tables = Object.keys(INITIAL_SCHEMA);
+  container.innerHTML = tables.map((tName) => {
+    const data = INITIAL_SCHEMA[tName];
+    const columns = data.length > 0 ? Object.keys(data[0]) : [];
+    return `
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🗃️</span>
+            <h4 class="font-bold text-slate-800 dark:text-white font-mono text-base">${tName}</h4>
+          </div>
+          <span class="px-2 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">${data.length} registres</span>
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+          <strong>Camps / Columnes:</strong>
+          <div class="flex flex-wrap gap-1.5 mt-1">
+            ${columns.map((c) => `<code class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-slate-200 dark:border-slate-700">${c}</code>`).join("")}
+          </div>
+        </div>
+        <div class="overflow-x-auto max-h-56 border border-slate-200 dark:border-slate-700 rounded-xl">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 sticky top-0">
+              <tr>${columns.map((col) => `<th class="p-2 font-semibold">${col}</th>`).join("")}</tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+              ${data.slice(0, 5).map((row) => `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">${columns.map((col) => `<td class="p-2">${escapeHtml(String(row[col]))}</td>`).join("")}</tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+        ${data.length > 5 ? `<p class="text-[11px] text-slate-400 mt-2 text-right">Mostrant 5 de ${data.length} registres</p>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function renderResultsScreen() {
+  const container = document.getElementById("resultsDetailsContainer");
+  const summaryScore = document.getElementById("resultsSummaryScore");
+  const summaryPercent = document.getElementById("resultsSummaryPercent");
+  const summaryFeedback = document.getElementById("resultsSummaryFeedback");
+
+  const successCount = userProgress.filter((p) => p.status === "success").length;
+  const percent = Math.round((successCount / EXERCISES.length) * 100);
+
+  if (summaryScore) summaryScore.textContent = `${successCount} / ${EXERCISES.length}`;
+  if (summaryPercent) summaryPercent.textContent = `${percent}%`;
+
+  if (summaryFeedback) {
+    if (percent === 100) summaryFeedback.innerHTML = `<span class="text-emerald-700 dark:text-emerald-300 font-bold">Excel·lent! Has completat el 100% de les activitats de MySQL amb èxit! Ets un coordinador/a de dades de primera! 🎓🎉</span>`;
+    else if (percent >= 75) summaryFeedback.innerHTML = `<span class="text-indigo-700 dark:text-indigo-300 font-bold">Molt bona feina! Has superat la gran majoria dels reptes de gestió de dades. Només et queden uns quants per assolir el ple domini! 🚀</span>`;
+    else if (percent >= 50) summaryFeedback.innerHTML = `<span class="text-amber-700 dark:text-amber-300 font-bold">Bon progrés! Tens consolidats els fonaments, però et recomanem revisar les activitats saltades o amb errades per millorar. 💡</span>`;
+    else summaryFeedback.innerHTML = `<span class="text-rose-700 dark:text-rose-300 font-bold">Estàs en procés d'aprenentatge. No et desanimis! Revisa la secció de teoria, utilitza les pistes i torna a provar els exercicis. 💪</span>`;
+  }
+
+  if (container) {
+    container.innerHTML = EXERCISES.map((ex, idx) => {
+      const p = userProgress[idx];
+      let statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">⏳ Pendent</span>`;
+      let borderClass = "border-slate-200 dark:border-slate-800";
+      if (p.status === "success") { statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">✅ Assolit</span>`; borderClass = "border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/10"; }
+      else if (p.status === "skipped") { statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">⚠️ Saltat</span>`; borderClass = "border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/10"; }
+      else if (p.status === "error") { statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">❌ Errada</span>`; borderClass = "border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10"; }
+
+      return `
+        <div class="p-5 rounded-2xl border ${borderClass} bg-white dark:bg-slate-900 shadow-sm print-break-inside-avoid">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold text-slate-400">#${ex.id}</span>
+              <h5 class="font-bold text-slate-800 dark:text-white text-sm">${ex.titol}</h5>
+              <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${ex.nivell}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              ${statusBadge}
+              <button onclick="goToExerciseFromResults(${idx})" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold no-print">Practicar</button>
+            </div>
+          </div>
+          <div class="text-xs text-slate-600 dark:text-slate-400 mb-3"><strong>Objectiu:</strong> ${ex.objectiu}</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Codi provat per l'alumne:</span>
+              <pre class="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">${escapeHtml(p.userQuery || "(Cap consulta escrita)")}</pre>
+              ${p.lastError ? `<div class="mt-2 text-rose-600 dark:text-rose-400 text-[11px] font-sans"><strong>Errada detectada:</strong> ${p.lastError}</div>` : ""}
+            </div>
+            <div class="p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900">
+              <span class="text-[10px] uppercase font-bold text-indigo-500 dark:text-indigo-400 block mb-1">Solució recomanada:</span>
+              <pre class="text-indigo-900 dark:text-indigo-200 whitespace-pre-wrap">${escapeHtml(ex.solucio)}</pre>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+}
+
+function goToExerciseFromResults(idx) {
+  currentExerciseIndex = idx;
+  switchTab("simulador");
+  renderExercise(idx);
+}
+
+function retryFailedExercises() {
+  const firstUnfinished = userProgress.findIndex((p) => p.status !== "success");
+  if (firstUnfinished !== -1) goToExerciseFromResults(firstUnfinished);
+  else showToast("Ja tens tots els exercicis completats!", "success");
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function showToast(message, type = "info") {
+  const toast = document.createElement("div");
+  let bg = "bg-slate-800 text-white";
+  if (type === "success") bg = "bg-emerald-600 text-white";
+  toast.className = `fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg transition-all duration-300 transform translate-y-4 opacity-0 ${bg}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.remove("translate-y-4", "opacity-0"), 10);
+  setTimeout(() => {
+    toast.classList.add("translate-y-4", "opacity-0");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+  </script>
+</body>
+</html>

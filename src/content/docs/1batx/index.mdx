@@ -4,24 +4,75 @@ description: "Mòduls i recursos de programació per a 1r de Batxillerat."
 tableOfContents: false
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card } from '@astrojs/starlight/components';
 
-Benvinguts al curs de programació. Selecciona el mòdul sobre el qual vols treballar:
+<div class="batx-hero-banner">
+  <div class="batx-hero-svg">
+    <svg viewBox="0 0 220 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="batxGrad" x1="0" y1="0" x2="220" y2="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#0082C1" />
+          <stop offset="100%" stop-color="#38bdf8" />
+        </linearGradient>
+      </defs>
 
-<CardGrid>
+      {/* Finestra de terminal / editor de codi */}
+      <rect x="35" y="34" width="150" height="106" rx="12" fill="#0f172a" stroke="url(#batxGrad)" stroke-width="3" />
+      
+      {/* Barra superior de la finestra */}
+      <path d="M35 46 C35 39.3726 40.3726 34 47 34 H173 C179.627 34 185 39.3726 185 46 V54 H35 V46 Z" fill="#1e293b" />
+      <circle cx="49" cy="44" r="3.5" fill="#ef4444" />
+      <circle cx="60" cy="44" r="3.5" fill="#facc15" />
+      <circle cx="71" cy="44" r="3.5" fill="#22c55e" />
+
+      {/* Etiqueta flotant < /> */}
+      <g class="code-tag-float">
+        <rect x="132" y="20" width="44" height="22" rx="6" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" />
+        <text x="154" y="35" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="11" font-weight="bold">&lt;/&gt;</text>
+      </g>
+
+      {/* Línies de codi animades */}
+      <rect x="48" y="66" width="32" height="5" rx="2.5" fill="#38bdf8" class="code-line-1" />
+      <rect x="85" y="66" width="54" height="5" rx="2.5" fill="#94a3b8" class="code-line-1" />
+
+      <rect x="58" y="80" width="46" height="5" rx="2.5" fill="#facc15" class="code-line-2" />
+      <rect x="109" y="80" width="38" height="5" rx="2.5" fill="#38bdf8" class="code-line-2" />
+
+      <rect x="58" y="94" width="28" height="5" rx="2.5" fill="#4ade80" class="code-line-3" />
+      <rect x="91" y="94" width="62" height="5" rx="2.5" fill="#64748b" class="code-line-3" />
+
+      {/* Prompt final + cursor parpellejant */}
+      <text x="48" y="118" fill="#38bdf8" font-family="monospace" font-size="13" font-weight="bold">&gt;_</text>
+      <rect x="68" y="108" width="7" height="12" rx="1.5" fill="#38bdf8" class="terminal-cursor" />
+
+      {/* Peu / Base de connexió */}
+      <path d="M88 140 L82 152 H138 L132 140" fill="#1e293b" stroke="#0082C1" stroke-width="2" />
+      <line x1="68" y1="152" x2="152" y2="152" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+    </svg>
+  </div>
+
+  <div class="batx-hero-text">
+    <span class="status-badge">1r BATXILLERAT · PROGRAMACIÓ</span>
+    <h2>Benvinguts al curs de programació</h2>
+    <p>
+      Selecciona el mòdul sobre el qual vols treballar per accedir als apunts, pràctiques i projectes web.
+    </p>
+  </div>
+</div>
+
+<div class="batx-grid">
   <Card title="Mòdul: HTML" icon="chrome">
     Estructura web.
 
-    {/*[Accedir al mòdul d'HTML →](/tecnologies-tdp/1batx/html/)*/}
-    <span style="font-size: 0.85rem; color: #71717a; font-style: italic;">En construcció...</span>
+    {/* [Accedir al mòdul d'HTML →](/tecnologies-tdp/1batx/html/) */}
+    <span class="status-soon">En construcció...</span>
   </Card>
 
   <Card title="Mòdul: CSS" icon="seti:css">
     Maquetació i disseny d'interfícies.
 
     {/* [Accedir al mòdul CSS →](/tecnologies-tdp/1batx/css/) */}
-    <span style="font-size: 0.85rem; color: #71717a; font-style: italic;">En construcció...</span>
-
+    <span class="status-soon">En construcció...</span>
   </Card>
 
   <Card title="Mòdul: BBDD i PHP" icon="database">
@@ -40,8 +91,7 @@ Benvinguts al curs de programació. Selecciona el mòdul sobre el qual vols treb
     Lògica d'alt nivell, estructures de dades i algoritmes.
 
     {/* [Accedir al mòdul de Python →](/tecnologies-tdp/1batx/python/) */}
-    <span style="font-size: 0.85rem; color: #71717a; font-style: italic;">En construcció...</span>
-
+    <span class="status-soon">En construcció...</span>
   </Card>
 
   <Card title="Mòdul: ASTRO + NODE.JS" icon="server">
@@ -49,5 +99,153 @@ Benvinguts al curs de programació. Selecciona el mòdul sobre el qual vols treb
 
     [Accedir al mòdul ASTRO-NODE.JS →](/tecnologies-tdp/1batx/astro-nodejs/crear_portal_web/)
   </Card>
-</CardGrid>
+</div>
 
+<style is:global>{`
+  /* Sobreescrivim l'amplada màxima nativa de Starlight només en aquesta pàgina */
+  :root {
+    --sl-content-width: 100% !important;
+  }
+
+  .sl-markdown-content > * {
+    max-width: 100% !important;
+  }
+
+  .batx-hero-banner {
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 130, 193, 0.3);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+  }
+  :root[data-theme='light'] .batx-hero-banner {
+    background: rgba(248, 250, 252, 0.9);
+  }
+  .batx-hero-svg {
+    width: 155px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.25));
+  }
+  .batx-hero-text {
+    text-align: left;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    background: rgba(0, 130, 193, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+  }
+  :root[data-theme='light'] .status-badge {
+    color: #0082C1;
+    background: rgba(0, 130, 193, 0.1);
+  }
+  .batx-hero-text h2 {
+    margin-top: 0.65rem !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 1.35rem;
+  }
+  .batx-hero-text p {
+    color: #94a3b8;
+    line-height: 1.55;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  :root[data-theme='light'] .batx-hero-text p {
+    color: #475569;
+  }
+
+  /* Graella pròpia amb 3 columnes exactament iguals (2 files de 3 targetes) */
+  .batx-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+    margin-top: 0 !important;
+  }
+
+  .batx-grid > .card {
+    margin: 0 !important;
+    min-width: 0;
+    height: 100%;
+  }
+
+  .batx-grid .title {
+    font-size: 1.1rem !important;
+    line-height: 1.3 !important;
+    word-break: break-word;
+  }
+
+  @media (max-width: 1100px) {
+    .batx-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .batx-hero-banner {
+      flex-direction: column;
+      text-align: center;
+      padding: 1.5rem 1.25rem;
+    }
+    .batx-hero-text {
+      text-align: center;
+    }
+    .batx-hero-svg {
+      width: 140px;
+    }
+    .batx-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .status-soon {
+    font-size: 0.85rem;
+    color: #71717a;
+    font-style: italic;
+  }
+
+  /* Animacions SVG de programació */
+  .terminal-cursor {
+    animation: cursorBlink 1s step-end infinite;
+  }
+  .code-tag-float {
+    animation: tagFloat 3s ease-in-out infinite alternate;
+  }
+  .code-line-1 {
+    animation: codePulse 3s ease-in-out infinite;
+  }
+  .code-line-2 {
+    animation: codePulse 3s ease-in-out infinite 0.5s;
+  }
+  .code-line-3 {
+    animation: codePulse 3s ease-in-out infinite 1s;
+  }
+
+  @keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  @keyframes tagFloat {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-4px); }
+  }
+  @keyframes codePulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+
+  /* Amaga el títol H1 de Starlight en aquesta pàgina */
+h1#_top {
+  display: none !important;
+`}</style>
